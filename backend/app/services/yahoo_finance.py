@@ -15,6 +15,7 @@ from app.models.stock import (
     FinancialStatement,
     FinancialStatementResponse,
     HistoricalPrices,
+    IndustryAverages,
     KeyRatios,
     PricePoint,
     SearchResponse,
@@ -83,6 +84,8 @@ class YahooFinanceProvider(DataProvider):
                 currency=info.get("currency"),
                 exchange=info.get("exchange"),
                 logo_url=info.get("logo_url"),
+                shares_outstanding=info.get("sharesOutstanding"),
+                current_price=info.get("currentPrice"),
             )
         except Exception:
             logger.exception("Error fetching profile for '%s'", ticker)
@@ -250,4 +253,102 @@ class YahooFinanceProvider(DataProvider):
             )
         except Exception:
             logger.exception("Error fetching ratios for '%s'", ticker)
+            return None
+
+    def get_industry_averages(self, ticker: str) -> IndustryAverages | None:
+        """Compute averaged financial metrics across industry peers.
+
+        Uses yfinance's Industry class to find peers, then fetches their
+        income statements and cash flows to compute average margins,
+        tax rates, capex ratios, and revenue growth.
+
+        Args:
+            ticker: The stock ticker symbol to find peers for.
+
+        Returns:
+            An IndustryAverages with mean metrics, or None on error.
+        """
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            industry_key = info.get("industryKey", "")
+            industry_name = info.get("industry", "Unknown")
+            if not industry_key:
+                return None
+
+            # Get peer tickers from yfinance Industry
+            ind = yf.Industry(industry_key)
+            top_df = ind.top_companies
+            if top_df is None or top_df.empty:
+                return None
+
+            peer_symbols = [
+                sym for sym in top_df.index.tolist()
+                if sym != ticker.upper()
+            ][:10]
+
+            if not peer_symbols:
+                return None
+
+            # Collect metrics from each peer
+            op_margins: list[float] = []
+            tax_rates: list[float] = []
+            capex_pcts: list[float] = []
+            rev_growths: list[float] = []
+
+            for sym in peer_symbols:
+                try:
+                    peer = yf.Ticker(sym)
+
+                    # Income statement for margins, tax rate, and revenue growth
+                    inc = peer.income_stmt
+                    if inc is not None and not inc.empty and len(inc.columns) >= 1:
+                        latest = inc.iloc[:, 0]
+                        revenue = latest.get("Total Revenue")
+                        op_income = latest.get("Operating Income")
+                        tax_provision = latest.get("Tax Provision")
+                        pretax = latest.get("Pretax Income")
+
+                        if pd.notna(revenue) and revenue != 0:
+                            if pd.notna(op_income):
+                                op_margins.append(op_income / revenue * 100)
+                            if pd.notna(tax_provision) and pd.notna(pretax) and pretax != 0:
+                                tax_rates.append(tax_provision / pretax * 100)
+
+                        # Revenue growth from two most recent years
+                        if len(inc.columns) >= 2:
+                            prev_revenue = inc.iloc[:, 1].get("Total Revenue")
+                            if (
+                                pd.notna(revenue)
+                                and pd.notna(prev_revenue)
+                                and prev_revenue != 0
+                            ):
+                                growth = (revenue - prev_revenue) / abs(prev_revenue) * 100
+                                rev_growths.append(growth)
+
+                    # Cash flow for capex ratio
+                    cf = peer.cashflow
+                    if cf is not None and not cf.empty and len(cf.columns) >= 1:
+                        latest_cf = cf.iloc[:, 0]
+                        capex = latest_cf.get("Capital Expenditure")
+                        if pd.notna(capex) and pd.notna(revenue) and revenue != 0:
+                            capex_pcts.append(abs(capex) / revenue * 100)
+
+                except Exception:
+                    logger.debug("Skipping peer '%s' due to error", sym)
+                    continue
+
+            def _avg(values: list[float]) -> float | None:
+                return round(sum(values) / len(values), 2) if values else None
+
+            return IndustryAverages(
+                industry=industry_name,
+                peer_count=len(peer_symbols),
+                operating_margin=_avg(op_margins),
+                tax_rate=_avg(tax_rates),
+                capex_pct_revenue=_avg(capex_pcts),
+                revenue_growth=_avg(rev_growths),
+            )
+        except Exception:
+            logger.exception("Error computing industry averages for '%s'", ticker)
             return None

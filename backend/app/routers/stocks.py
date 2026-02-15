@@ -10,6 +10,7 @@ from app.models.stock import (
     CompanyProfile,
     FinancialStatementResponse,
     HistoricalPrices,
+    IndustryAverages,
     KeyRatios,
     SearchResponse,
 )
@@ -50,6 +51,26 @@ def get_company_profile(ticker: str) -> CompanyProfile:
     if profile is None:
         raise HTTPException(status_code=404, detail=f"Ticker '{ticker}' not found")
     return profile
+
+
+@router.get("/{ticker}/industry-averages", response_model=IndustryAverages)
+def get_industry_averages(ticker: str) -> IndustryAverages:
+    """Compute averaged financial metrics across industry peers.
+
+    Args:
+        ticker: The stock ticker symbol.
+
+    Returns:
+        Averaged operating margin, tax rate, capex/revenue, and revenue growth
+        across companies in the same industry.
+
+    Raises:
+        HTTPException: 404 if no industry data is found.
+    """
+    averages = provider.get_industry_averages(ticker)
+    if averages is None:
+        raise HTTPException(status_code=404, detail=f"No industry data for '{ticker}'")
+    return averages
 
 
 @router.get("/{ticker}/prices", response_model=HistoricalPrices)
@@ -130,6 +151,48 @@ def get_cash_flow(ticker: str) -> FinancialStatementResponse:
     if statement is None:
         raise HTTPException(status_code=404, detail=f"No cash flow data for '{ticker}'")
     return statement
+
+
+@router.get("/batch/ratios", response_model=list[KeyRatios])
+def get_batch_ratios(
+    tickers: str = Query(..., description="Comma-separated ticker symbols (max 10)"),
+) -> list[KeyRatios]:
+    """Fetch key ratios for multiple tickers at once.
+
+    Args:
+        tickers: Comma-separated ticker symbols (e.g. 'AAPL,MSFT,GOOG').
+
+    Returns:
+        A list of KeyRatios for each ticker that returned data.
+    """
+    symbols = [t.strip().upper() for t in tickers.split(",") if t.strip()][:10]
+    results: list[KeyRatios] = []
+    for sym in symbols:
+        ratios = provider.get_key_ratios(sym)
+        if ratios:
+            results.append(ratios)
+    return results
+
+
+@router.get("/batch/profiles", response_model=list[CompanyProfile])
+def get_batch_profiles(
+    tickers: str = Query(..., description="Comma-separated ticker symbols (max 10)"),
+) -> list[CompanyProfile]:
+    """Fetch company profiles for multiple tickers at once.
+
+    Args:
+        tickers: Comma-separated ticker symbols (e.g. 'AAPL,MSFT,GOOG').
+
+    Returns:
+        A list of CompanyProfile for each ticker that returned data.
+    """
+    symbols = [t.strip().upper() for t in tickers.split(",") if t.strip()][:10]
+    results: list[CompanyProfile] = []
+    for sym in symbols:
+        profile = provider.get_company_profile(sym)
+        if profile:
+            results.append(profile)
+    return results
 
 
 @router.get("/{ticker}/ratios", response_model=KeyRatios)

@@ -6,13 +6,11 @@ A web application for analysing US stocks. Users can view historical financials,
 
 **Current phase: Phase 1** — Ticker search, company profile, historical price charts, financial statements, and key ratios.
 
-Phase 4 will add Supabase for PostgreSQL database and authentication.
-
 ## Architecture
 
 - **Frontend** (`/frontend`): React + TypeScript, Tailwind CSS, Recharts for charts, built with Vite
 - **Backend** (`/backend`): Python FastAPI, yfinance for stock data
-- **Database** (planned): Supabase (PostgreSQL + auth)
+- **Database**: Supabase (PostgreSQL + auth). Backend talks to Supabase via PostgREST (httpx). Frontend has the Supabase JS client for auth (Phase 4).
 
 ## Development
 
@@ -34,6 +32,13 @@ source venv/Scripts/activate  # Windows (Git Bash)
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
+
+### Environment Variables
+
+- **Backend** (`backend/.env`): `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`
+- **Frontend** (`frontend/.env`): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+
+See `backend/.env.example` for reference.
 
 ## Code Style
 

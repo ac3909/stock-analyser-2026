@@ -4,6 +4,7 @@ import type {
   CompanyProfile,
   HistoricalPrices,
   FinancialStatementResponse,
+  IndustryAverages,
   KeyRatios,
 } from "../types/stock";
 
@@ -70,5 +71,34 @@ export async function getCashFlow(
 /** Fetch key financial ratios for a ticker. */
 export async function getKeyRatios(ticker: string): Promise<KeyRatios> {
   const { data } = await api.get<KeyRatios>(`/api/stocks/${ticker}/ratios`);
+  return data;
+}
+
+/** Fetch industry-averaged financial metrics for a ticker's peers. */
+export async function getIndustryAverages(
+  ticker: string
+): Promise<IndustryAverages> {
+  const { data } = await api.get<IndustryAverages>(
+    `/api/stocks/${ticker}/industry-averages`
+  );
+  return data;
+}
+
+/** Fetch key ratios for multiple tickers at once (for comparables). */
+export async function getBatchRatios(tickers: string[]): Promise<KeyRatios[]> {
+  const { data } = await api.get<KeyRatios[]>("/api/stocks/batch/ratios", {
+    params: { tickers: tickers.join(",") },
+  });
+  return data;
+}
+
+/** Fetch company profiles for multiple tickers at once (for comparables). */
+export async function getBatchProfiles(
+  tickers: string[]
+): Promise<CompanyProfile[]> {
+  const { data } = await api.get<CompanyProfile[]>(
+    "/api/stocks/batch/profiles",
+    { params: { tickers: tickers.join(",") } }
+  );
   return data;
 }

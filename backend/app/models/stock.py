@@ -1,5 +1,7 @@
 """Pydantic response models for stock data endpoints."""
 
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -33,6 +35,8 @@ class CompanyProfile(BaseModel):
     currency: str | None = None
     exchange: str | None = None
     logo_url: str | None = None
+    shares_outstanding: float | None = None
+    current_price: float | None = None
 
 
 class PricePoint(BaseModel):
@@ -93,3 +97,40 @@ class KeyRatios(BaseModel):
     beta: float | None = None
     fifty_two_week_high: float | None = None
     fifty_two_week_low: float | None = None
+
+
+class IndustryAverages(BaseModel):
+    """Averaged financial metrics across industry peers."""
+
+    industry: str
+    peer_count: int
+    operating_margin: float | None = None
+    tax_rate: float | None = None
+    capex_pct_revenue: float | None = None
+    revenue_growth: float | None = None
+
+
+class Projection(BaseModel):
+    """A saved projection/scenario from the database."""
+
+    id: str
+    ticker: str
+    title: str
+    data: dict[str, Any]
+    created_at: str
+    updated_at: str
+
+
+class ProjectionCreate(BaseModel):
+    """Request body to create a new projection."""
+
+    ticker: str
+    title: str
+    data: dict[str, Any]
+
+
+class ProjectionUpdate(BaseModel):
+    """Request body to update an existing projection."""
+
+    title: str | None = None
+    data: dict[str, Any] | None = None
