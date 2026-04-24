@@ -6,6 +6,7 @@ instead of raising exceptions.
 """
 
 import logging
+import time
 from typing import Any
 
 import pandas as pd
@@ -45,18 +46,72 @@ _session.headers.update({
 })
 
 
-def _get_info(ticker: str) -> dict[str, Any]:
-    """Fetch stock.info with caching to avoid redundant Yahoo Finance calls.
+_crumb: str | None = None
+_crumb_fetched_at: float = 0
 
-    Multiple endpoints (profile, ratios, industry peers) all need the same
-    info dict. This cache ensures each ticker is only fetched once per 5 minutes.
+
+def _get_crumb() -> str | None:
+    """Fetch Yahoo Finance API crumb required for quoteSummary requests."""
+    global _crumb, _crumb_fetched_at
+    if _crumb and time.time() - _crumb_fetched_at < 3600:
+        return _crumb
+    try:
+        _session.get("https://finance.yahoo.com", timeout=10)
+        resp = _session.get(
+            "https://query1.finance.yahoo.com/v1/test/getcrumb", timeout=10
+        )
+        if resp.status_code == 200 and resp.text.strip():
+            _crumb = resp.text.strip()
+            _crumb_fetched_at = time.time()
+            return _crumb
+    except Exception:
+        logger.debug("Failed to fetch Yahoo Finance crumb")
+    return None
+
+
+def _flatten_quote_summary(modules: dict[str, Any]) -> dict[str, Any]:
+    """Flatten quoteSummary response modules to match yfinance .info field names."""
+    flat: dict[str, Any] = {}
+    for module in modules.values():
+        if not isinstance(module, dict):
+            continue
+        for k, v in module.items():
+            if isinstance(v, dict) and "raw" in v:
+                flat[k] = v["raw"]
+            elif not isinstance(v, (dict, list)):
+                flat[k] = v
+    return flat
+
+
+def _get_info(ticker: str) -> dict[str, Any]:
+    """Fetch stock data via Yahoo Finance quoteSummary API with caching.
+
+    Uses direct HTTP rather than yfinance .info, which is unreliable on cloud IPs.
     """
     key = ticker.upper()
     if key in _info_cache:
         return _info_cache[key]
-    info = yf.Ticker(ticker, session=_session).info or {}
-    _info_cache[key] = info
-    return info
+    try:
+        crumb = _get_crumb()
+        params: dict[str, str] = {
+            "modules": "price,summaryProfile,defaultKeyStatistics,financialData,summaryDetail",
+        }
+        if crumb:
+            params["crumb"] = crumb
+        resp = _session.get(
+            f"https://query2.finance.yahoo.com/v10/finance/quoteSummary/{key}",
+            params=params,
+            timeout=15,
+        )
+        resp.raise_for_status()
+        result = resp.json().get("quoteSummary", {}).get("result", [])
+        if result:
+            info = _flatten_quote_summary(result[0])
+            _info_cache[key] = info
+            return info
+    except Exception:
+        logger.exception("Error fetching info for '%s'", ticker)
+    return {}
 
 
 class YahooFinanceProvider(DataProvider):
