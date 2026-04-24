@@ -27,6 +27,7 @@ from app.models.stock import (
     SearchResult,
 )
 from app.services.data_provider import DataProvider
+from app.services.fmp import fetch_stock_info as _fmp_fetch_info
 
 logger = logging.getLogger(__name__)
 
@@ -109,34 +110,17 @@ def _flatten_quote_summary(modules: dict[str, Any]) -> dict[str, Any]:
 
 
 def _get_info(ticker: str) -> dict[str, Any]:
-    """Fetch stock data via Yahoo Finance quoteSummary API with caching.
+    """Fetch stock data via FMP with caching.
 
-    Uses direct HTTP rather than yfinance .info, which is unreliable on cloud IPs.
+    Yahoo Finance quoteSummary is rate-limited from cloud IPs — FMP is used instead.
     """
     key = ticker.upper()
     if key in _info_cache:
         return _info_cache[key]
-    try:
-        crumb = _get_crumb()
-        params: dict[str, str] = {
-            "modules": "price,summaryProfile,defaultKeyStatistics,financialData,summaryDetail",
-        }
-        if crumb:
-            params["crumb"] = crumb
-        resp = _session.get(
-            f"https://query2.finance.yahoo.com/v10/finance/quoteSummary/{key}",
-            params=params,
-            timeout=15,
-        )
-        resp.raise_for_status()
-        result = resp.json().get("quoteSummary", {}).get("result", [])
-        if result:
-            info = _flatten_quote_summary(result[0])
-            _info_cache[key] = info
-            return info
-    except Exception:
-        logger.exception("Error fetching info for '%s'", ticker)
-    return {}
+    info = _fmp_fetch_info(key)
+    if info:
+        _info_cache[key] = info
+    return info
 
 
 class YahooFinanceProvider(DataProvider):

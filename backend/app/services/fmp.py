@@ -92,6 +92,95 @@ def fetch_latest_transcript(ticker: str) -> dict[str, Any] | None:
         return None
 
 
+def fetch_stock_info(ticker: str) -> dict[str, Any]:
+    """Fetch stock profile, quote, and ratios from FMP, mapped to yfinance .info field names.
+
+    Args:
+        ticker: Stock ticker symbol.
+
+    Returns:
+        Dict with yfinance-compatible field names, or empty dict on error.
+    """
+    if not FMP_API_KEY:
+        logger.warning("FMP_API_KEY not set — cannot fetch stock info")
+        return {}
+
+    sym = ticker.upper()
+    out: dict[str, Any] = {}
+
+    try:
+        r = httpx.get(f"{FMP_BASE}/profile/{sym}", params={"apikey": FMP_API_KEY}, timeout=15)
+        r.raise_for_status()
+        data = r.json()
+        if data:
+            p = data[0]
+            out.update({
+                "shortName": p.get("companyName"),
+                "longName": p.get("companyName"),
+                "sector": p.get("sector"),
+                "industry": p.get("industry"),
+                "country": p.get("country"),
+                "website": p.get("website"),
+                "longBusinessSummary": p.get("description"),
+                "marketCap": p.get("mktCap"),
+                "currency": p.get("currency"),
+                "exchange": p.get("exchangeShortName"),
+                "logo_url": p.get("image"),
+                "beta": p.get("beta"),
+                "currentPrice": p.get("price"),
+                "regularMarketPrice": p.get("price"),
+                "fullTimeEmployees": int(p["fullTimeEmployees"]) if p.get("fullTimeEmployees") else None,
+                "fiftyTwoWeekHigh": p.get("range", "").split("-")[1].strip() if "-" in str(p.get("range", "")) else None,
+                "fiftyTwoWeekLow": p.get("range", "").split("-")[0].strip() if "-" in str(p.get("range", "")) else None,
+                "industryKey": p.get("industry", "").lower().replace(" ", "-").replace("—", "-").replace("&", "and"),
+            })
+    except Exception:
+        logger.exception("FMP profile fetch failed for %s", sym)
+
+    try:
+        r = httpx.get(f"{FMP_BASE}/quote/{sym}", params={"apikey": FMP_API_KEY}, timeout=15)
+        r.raise_for_status()
+        data = r.json()
+        if data:
+            q = data[0]
+            out.update({
+                "currentPrice": q.get("price"),
+                "regularMarketPrice": q.get("price"),
+                "sharesOutstanding": q.get("sharesOutstanding"),
+                "trailingPE": q.get("pe"),
+                "fiftyTwoWeekHigh": q.get("yearHigh"),
+                "fiftyTwoWeekLow": q.get("yearLow"),
+            })
+    except Exception:
+        logger.exception("FMP quote fetch failed for %s", sym)
+
+    try:
+        r = httpx.get(f"{FMP_BASE}/ratios/{sym}", params={"limit": 1, "apikey": FMP_API_KEY}, timeout=15)
+        r.raise_for_status()
+        data = r.json()
+        if data:
+            rat = data[0]
+            out.update({
+                "forwardPE": rat.get("priceEarningsRatio"),
+                "trailingPegRatio": rat.get("priceEarningsToGrowthRatio"),
+                "priceToBook": rat.get("priceToBookRatio"),
+                "priceToSalesTrailing12Months": rat.get("priceToSalesRatio"),
+                "ev_to_ebitda": rat.get("enterpriseValueMultiple"),
+                "profitMargins": rat.get("netProfitMargin"),
+                "operatingMargins": rat.get("operatingProfitMargin"),
+                "returnOnEquity": rat.get("returnOnEquity"),
+                "returnOnAssets": rat.get("returnOnAssets"),
+                "debtToEquity": rat.get("debtEquityRatio"),
+                "currentRatio": rat.get("currentRatio"),
+                "quickRatio": rat.get("quickRatio"),
+                "dividendYield": rat.get("dividendYield"),
+            })
+    except Exception:
+        logger.exception("FMP ratios fetch failed for %s", sym)
+
+    return out
+
+
 def fetch_short_interest(ticker: str) -> dict[str, Any] | None:
     """Fetch the latest short interest data for a ticker.
 
