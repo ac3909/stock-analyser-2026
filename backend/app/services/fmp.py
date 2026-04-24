@@ -109,7 +109,9 @@ def fetch_short_interest(ticker: str) -> dict[str, Any] | None:
             params={"apikey": FMP_API_KEY},
             timeout=10,
         )
-        resp.raise_for_status()
+        if not resp.is_success:
+            logger.debug("Short interest unavailable for %s (status %s)", ticker, resp.status_code)
+            return None
         data = resp.json()
         if not data:
             return None
@@ -119,5 +121,5 @@ def fetch_short_interest(ticker: str) -> dict[str, Any] | None:
             "short_shares": item.get("shortShares"),
         }
     except Exception:
-        logger.exception("Error fetching short interest for %s", ticker)
+        logger.warning("Error fetching short interest for %s", ticker)
         return None

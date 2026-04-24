@@ -28,6 +28,16 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+
+def _strip_code_fences(text: str) -> str:
+    """Strip markdown code fences Claude sometimes wraps JSON in."""
+    text = text.strip()
+    if text.startswith("```"):
+        lines = text.split("\n")
+        # Remove first line (```json or ```) and last line (```)
+        text = "\n".join(lines[1:-1]) if lines[-1].strip() == "```" else "\n".join(lines[1:])
+    return text.strip()
+
 CLAUDE_MODEL = "claude-sonnet-4-6"
 
 _GOAL_CONTEXT: dict[str, str] = {
@@ -115,7 +125,7 @@ def extract_transcript(
             ],
             messages=[{"role": "user", "content": prompt}],
         )
-        raw = response.content[0].text.strip()
+        raw = _strip_code_fences(response.content[0].text)
         return json.loads(raw)
     except json.JSONDecodeError:
         logger.warning("Claude extraction returned non-JSON for %s", ticker)
@@ -210,11 +220,11 @@ def synthesise_recommendation(
     try:
         response = client.messages.create(
             model=CLAUDE_MODEL,
-            max_tokens=4000,
+            max_tokens=8000,
             system=context_block,
             messages=[{"role": "user", "content": prompt}],
         )
-        raw = response.content[0].text.strip()
+        raw = _strip_code_fences(response.content[0].text)
         data = json.loads(raw)
 
         thesis = AnalysisThesis(
