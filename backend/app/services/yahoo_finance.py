@@ -6,9 +6,11 @@ instead of raising exceptions.
 """
 
 import logging
+from typing import Any
 
 import pandas as pd
 import yfinance as yf
+from cachetools import TTLCache
 
 from app.models.stock import (
     CompanyProfile,
@@ -27,6 +29,23 @@ from app.services.data_provider import DataProvider
 logger = logging.getLogger(__name__)
 
 VALID_PERIODS = {"1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"}
+
+# Module-level TTL cache for stock.info dicts (5-minute TTL, up to 100 tickers)
+_info_cache: TTLCache[str, dict[str, Any]] = TTLCache(maxsize=100, ttl=300)
+
+
+def _get_info(ticker: str) -> dict[str, Any]:
+    """Fetch stock.info with caching to avoid redundant Yahoo Finance calls.
+
+    Multiple endpoints (profile, ratios, industry peers) all need the same
+    info dict. This cache ensures each ticker is only fetched once per 5 minutes.
+    """
+    key = ticker.upper()
+    if key in _info_cache:
+        return _info_cache[key]
+    info = yf.Ticker(ticker).info or {}
+    _info_cache[key] = info
+    return info
 
 
 class YahooFinanceProvider(DataProvider):
@@ -68,8 +87,7 @@ class YahooFinanceProvider(DataProvider):
             A CompanyProfile populated from Yahoo Finance info, or None on error.
         """
         try:
-            stock = yf.Ticker(ticker)
-            info = stock.info
+            info = _get_info(ticker)
             if not info or info.get("trailingPegRatio") is None and info.get("shortName") is None:
                 return None
             return CompanyProfile(
@@ -228,8 +246,7 @@ class YahooFinanceProvider(DataProvider):
             A KeyRatios object with valuation and profitability metrics, or None on error.
         """
         try:
-            stock = yf.Ticker(ticker)
-            info = stock.info
+            info = _get_info(ticker)
             if not info:
                 return None
             return KeyRatios(
@@ -256,6 +273,16 @@ class YahooFinanceProvider(DataProvider):
             logger.exception("Error fetching ratios for '%s'", ticker)
             return None
 
+    def get_current_price(self, ticker: str) -> float | None:
+        """Fetch the current market price for a ticker using the info cache."""
+        try:
+            info = _get_info(ticker)
+            price = info.get("currentPrice") or info.get("regularMarketPrice")
+            return float(price) if price is not None else None
+        except Exception:
+            logger.exception("Error fetching current price for '%s'", ticker)
+            return None
+
     def get_industry_averages(self, ticker: str) -> IndustryAverages | None:
         """Compute averaged financial metrics across industry peers.
 
@@ -270,26 +297,10 @@ class YahooFinanceProvider(DataProvider):
             An IndustryAverages with mean metrics, or None on error.
         """
         try:
-            stock = yf.Ticker(ticker)
-            info = stock.info
-            industry_key = info.get("industryKey", "")
-            industry_name = info.get("industry", "Unknown")
-            if not industry_key:
+            result = self._find_peer_symbols(ticker)
+            if result is None:
                 return None
-
-            # Get peer tickers from yfinance Industry
-            ind = yf.Industry(industry_key)
-            top_df = ind.top_companies
-            if top_df is None or top_df.empty:
-                return None
-
-            peer_symbols = [
-                sym for sym in top_df.index.tolist()
-                if sym != ticker.upper()
-            ][:10]
-
-            if not peer_symbols:
-                return None
+            industry_name, peer_symbols = result
 
             # Collect metrics from each peer
             op_margins: list[float] = []
@@ -364,8 +375,7 @@ class YahooFinanceProvider(DataProvider):
             A tuple of (industry_name, peer_symbols) or None on error.
         """
         try:
-            stock = yf.Ticker(ticker)
-            info = stock.info
+            info = _get_info(ticker)
             industry_key = info.get("industryKey", "")
             industry_name = info.get("industry", "Unknown")
             if not industry_key:
@@ -427,7 +437,7 @@ class YahooFinanceProvider(DataProvider):
 
         for sym in peer_symbols:
             try:
-                info = yf.Ticker(sym).info
+                info = _get_info(sym)
                 if not info:
                     continue
                 for field_name, yf_key in ratio_fields:
