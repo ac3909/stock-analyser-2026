@@ -4,3 +4,8 @@ yfinance
 pandas
 python-dotenv
 httpx
+cachetools
+anthropic
+pytest
+pytest-asyncio
+pytest-mock

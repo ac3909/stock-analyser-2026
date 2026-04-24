@@ -57,12 +57,12 @@ export default function CompsTable({ subject, comps, averages }: Props) {
   const allRatios = [subject, ...comps];
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+    <div className="bg-surface rounded-2xl border border-border overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-200">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide sticky left-0 bg-white z-10 min-w-[140px]">
+            <tr className="border-b border-border">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide sticky left-0 bg-surface z-10 min-w-[140px]">
                 Metric
               </th>
               {allSymbols.map((sym, i) => (
@@ -70,14 +70,14 @@ export default function CompsTable({ subject, comps, averages }: Props) {
                   key={sym}
                   className={`text-right px-4 py-3 text-xs font-semibold uppercase tracking-wide min-w-[90px] ${
                     i === 0
-                      ? "text-blue-600 bg-blue-50/50"
-                      : "text-gray-500"
+                      ? "text-blue-600 bg-accent-subtle/50"
+                      : "text-text-muted"
                   }`}
                 >
                   {sym}
                 </th>
               ))}
-              <th className="text-right px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide min-w-[90px]">
+              <th className="text-right px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide min-w-[90px]">
                 Avg
               </th>
             </tr>
@@ -88,7 +88,7 @@ export default function CompsTable({ subject, comps, averages }: Props) {
                 <tr key={group.title}>
                   <td
                     colSpan={allSymbols.length + 2}
-                    className="px-4 pt-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/50"
+                    className="px-4 pt-4 pb-1 text-xs font-semibold text-text-muted uppercase tracking-wider bg-surface-alt/50"
                   >
                     {group.title}
                   </td>
@@ -98,9 +98,9 @@ export default function CompsTable({ subject, comps, averages }: Props) {
                   return (
                     <tr
                       key={key}
-                      className={rowIdx % 2 === 1 ? "bg-gray-50/30" : ""}
+                      className={rowIdx % 2 === 1 ? "bg-surface-alt/30" : ""}
                     >
-                      <td className="px-4 py-2 text-gray-700 font-medium sticky left-0 bg-inherit z-10">
+                      <td className="px-4 py-2 text-text-primary font-medium sticky left-0 bg-inherit z-10">
                         {LABELS[key] ?? key}
                       </td>
                       {allRatios.map((r, i) => {
@@ -133,15 +133,15 @@ export default function CompsTable({ subject, comps, averages }: Props) {
                             key={r.symbol}
                             className={`text-right px-4 py-2 tabular-nums ${
                               isSubject
-                                ? `font-semibold bg-blue-50/30 ${highlight}`
-                                : "text-gray-600"
+                                ? `font-semibold bg-accent-subtle/30 ${highlight}`
+                                : "text-text-secondary"
                             }`}
                           >
                             {fmtVal(val, key)}
                           </td>
                         );
                       })}
-                      <td className="text-right px-4 py-2 text-gray-400 tabular-nums">
+                      <td className="text-right px-4 py-2 text-text-muted tabular-nums">
                         {fmtVal(avg, key)}
                       </td>
                     </tr>

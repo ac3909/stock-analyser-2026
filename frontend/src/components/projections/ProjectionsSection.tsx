@@ -148,7 +148,6 @@ export default function ProjectionsSection(props: Props) {
   });
 
   // If user has selected comps, we don't use the industry endpoint.
-  // For now we pass null — could compute from comp financials in a future enhancement.
   const effectiveIndustryAverages =
     compTickers && compTickers.length > 0 ? null : industryAverages ?? null;
 
@@ -220,7 +219,7 @@ export default function ProjectionsSection(props: Props) {
     <div className="space-y-6">
       {/* Model sub-tabs + save button */}
       <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-surface-alt rounded-lg p-1">
           {MODEL_TABS.map((tab) => (
             <button
               key={tab}
@@ -230,8 +229,8 @@ export default function ProjectionsSection(props: Props) {
               }}
               className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer ${
                 activeTab === tab
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-surface text-text-primary shadow-sm"
+                  : "text-text-secondary hover:text-text-primary"
               }`}
             >
               {tab}
@@ -243,7 +242,7 @@ export default function ProjectionsSection(props: Props) {
         {!showSaveInput ? (
           <button
             onClick={() => setShowSaveInput(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 bg-accent-subtle rounded-lg hover:opacity-80 transition-colors cursor-pointer"
           >
             <Save size={14} />
             Save Scenario
@@ -255,7 +254,7 @@ export default function ProjectionsSection(props: Props) {
               value={saveTitle}
               onChange={(e) => setSaveTitle(e.target.value)}
               placeholder="Scenario name..."
-              className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-surface-alt border border-border rounded-lg px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
             />
             <button
@@ -273,7 +272,7 @@ export default function ProjectionsSection(props: Props) {
                 setShowSaveInput(false);
                 setSaveTitle("");
               }}
-              className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 cursor-pointer"
+              className="px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary cursor-pointer"
             >
               Cancel
             </button>
@@ -302,8 +301,8 @@ export default function ProjectionsSection(props: Props) {
       )}
 
       {/* Saved scenarios */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6">
-        <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+      <div className="bg-surface rounded-2xl border border-border p-6">
+        <h4 className="text-sm font-semibold text-text-secondary uppercase tracking-wide mb-3">
           Saved Scenarios
         </h4>
         <SavedScenarios ticker={ticker} onLoad={handleLoad} />

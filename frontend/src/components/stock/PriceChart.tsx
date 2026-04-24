@@ -59,20 +59,23 @@ export default function PriceChart({ ticker }: Props) {
   const isUp = lastClose >= firstClose;
   const color = isUp ? "#10b981" : "#ef4444";
 
+  // Read the CSS variable for axis tick color
+  const tickColor = "var(--text-muted)";
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6">
+    <div>
       {/* Header + period selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-        <h3 className="text-lg font-semibold text-gray-900">Price History</h3>
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+        <h3 className="text-lg font-semibold text-text-primary">Price History</h3>
+        <div className="flex gap-1 bg-surface-alt rounded-lg p-1">
           {PERIODS.map((p) => (
             <button
               key={p.value}
               onClick={() => setPeriod(p.value)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                 period === p.value
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-surface text-text-primary shadow-sm"
+                  : "text-text-secondary hover:text-text-primary"
               }`}
             >
               {p.label}
@@ -82,13 +85,13 @@ export default function PriceChart({ ticker }: Props) {
       </div>
 
       {/* Chart */}
-      <div className="h-72 sm:h-80">
+      <div className="h-48 sm:h-56">
         {isFetching && prices.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-gray-400">
+          <div className="h-full flex items-center justify-center text-text-muted">
             <Loader2 size={24} className="animate-spin" />
           </div>
         ) : prices.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-sm text-gray-400">
+          <div className="h-full flex items-center justify-center text-sm text-text-muted">
             No price data available
           </div>
         ) : (
@@ -103,7 +106,7 @@ export default function PriceChart({ ticker }: Props) {
               <XAxis
                 dataKey="date"
                 tickFormatter={(d) => formatDate(d, period)}
-                tick={{ fontSize: 11, fill: "#94a3b8" }}
+                tick={{ fontSize: 11, fill: tickColor }}
                 axisLine={false}
                 tickLine={false}
                 minTickGap={40}
@@ -111,7 +114,7 @@ export default function PriceChart({ ticker }: Props) {
               <YAxis
                 domain={["auto", "auto"]}
                 tickFormatter={formatCurrency}
-                tick={{ fontSize: 11, fill: "#94a3b8" }}
+                tick={{ fontSize: 11, fill: tickColor }}
                 axisLine={false}
                 tickLine={false}
                 width={60}

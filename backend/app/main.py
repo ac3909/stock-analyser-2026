@@ -1,18 +1,14 @@
-"""FastAPI application entry point.
-
-Creates the app, configures CORS for the Vite dev server,
-and includes all API routers.
-"""
+"""FastAPI application entry point."""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import projections, stocks
+from app.routers import analysis, goals, macro, news, portfolio, projections, stocks
 
 app = FastAPI(
     title="Stock Analysis Tool API",
     description="API for analysing US stock market data",
-    version="0.1.0",
+    version="0.2.0",
 )
 
 app.add_middleware(
@@ -25,9 +21,13 @@ app.add_middleware(
 
 app.include_router(stocks.router)
 app.include_router(projections.router)
+app.include_router(macro.router)
+app.include_router(news.router)
+app.include_router(goals.router)
+app.include_router(portfolio.router)
+app.include_router(analysis.router)
 
 
 @app.get("/health")
 def health_check() -> dict[str, str]:
-    """Simple health check endpoint to verify the API is running."""
     return {"status": "ok"}

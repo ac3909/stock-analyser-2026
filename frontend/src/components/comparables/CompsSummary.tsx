@@ -63,10 +63,10 @@ export default function CompsSummary({ subject, averages }: Props) {
           return (
             <div
               key={key}
-              className="bg-white rounded-xl border border-gray-200 px-4 py-3"
+              className="bg-surface rounded-xl border border-border px-4 py-3"
             >
-              <p className="text-sm font-medium text-gray-900">{label}</p>
-              <p className="text-xs text-gray-400">Insufficient data</p>
+              <p className="text-sm font-medium text-text-primary">{label}</p>
+              <p className="text-xs text-text-muted">Insufficient data</p>
             </div>
           );
         }
@@ -77,10 +77,10 @@ export default function CompsSummary({ subject, averages }: Props) {
 
         const Icon = isNeutral ? Minus : isBetter ? TrendingUp : TrendingDown;
         const colorClass = isNeutral
-          ? "text-gray-500 bg-gray-50"
+          ? "text-text-secondary bg-surface-alt"
           : isBetter
-            ? "text-emerald-600 bg-emerald-50"
-            : "text-red-600 bg-red-50";
+            ? "text-emerald-600 bg-positive-subtle"
+            : "text-red-600 bg-negative-subtle";
 
         const direction =
           diffPct > 0 ? "above" : diffPct < 0 ? "below" : "at";
@@ -88,10 +88,10 @@ export default function CompsSummary({ subject, averages }: Props) {
         return (
           <div
             key={key}
-            className="bg-white rounded-xl border border-gray-200 px-4 py-3"
+            className="bg-surface rounded-xl border border-border px-4 py-3"
           >
             <div className="flex items-center justify-between mb-1">
-              <p className="text-sm font-medium text-gray-900">{label}</p>
+              <p className="text-sm font-medium text-text-primary">{label}</p>
               <span
                 className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-lg ${colorClass}`}
               >
@@ -99,8 +99,8 @@ export default function CompsSummary({ subject, averages }: Props) {
                 {Math.abs(diffPct).toFixed(0)}% {direction}
               </span>
             </div>
-            <p className="text-xs text-gray-500">
-              <span className="font-semibold text-gray-700">
+            <p className="text-xs text-text-secondary">
+              <span className="font-semibold text-text-primary">
                 {format(subjectVal)}
               </span>{" "}
               vs avg{" "}

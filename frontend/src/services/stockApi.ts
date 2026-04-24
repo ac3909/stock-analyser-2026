@@ -5,6 +5,7 @@ import type {
   HistoricalPrices,
   FinancialStatementResponse,
   IndustryAverages,
+  IndustryRatios,
   KeyRatios,
 } from "../types/stock";
 
@@ -71,6 +72,16 @@ export async function getCashFlow(
 /** Fetch key financial ratios for a ticker. */
 export async function getKeyRatios(ticker: string): Promise<KeyRatios> {
   const { data } = await api.get<KeyRatios>(`/api/stocks/${ticker}/ratios`);
+  return data;
+}
+
+/** Fetch averaged key ratios across a ticker's industry peers. */
+export async function getIndustryRatios(
+  ticker: string
+): Promise<IndustryRatios> {
+  const { data } = await api.get<IndustryRatios>(
+    `/api/stocks/${ticker}/industry-ratios`
+  );
   return data;
 }
 

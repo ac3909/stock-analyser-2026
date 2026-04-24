@@ -21,8 +21,8 @@ interface Props {
   ratios?: KeyRatios | null;
 }
 
-/** Displays company overview: name, sector, market cap, 52-week range. */
-export default function CompanyProfile({ profile, ratios }: Props) {
+/** Key metric stat boxes — rendered as fragment so parent controls grid layout. */
+export function KeyMetrics({ profile, ratios }: Props) {
   const stats = [
     { label: "Market Cap", value: formatMarketCap(profile.market_cap) },
     { label: "52W High", value: formatPrice(ratios?.fifty_two_week_high ?? null) },
@@ -31,18 +31,32 @@ export default function CompanyProfile({ profile, ratios }: Props) {
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6">
+    <>
+      {stats.map((stat) => (
+        <div key={stat.label} className="bg-surface-alt rounded-xl px-4 py-3">
+          <p className="text-sm font-medium text-text-secondary">{stat.label}</p>
+          <p className="text-sm font-semibold text-text-primary">{stat.value}</p>
+        </div>
+      ))}
+    </>
+  );
+}
+
+/** Displays company overview: name, sector, description. */
+export default function CompanyProfile({ profile }: Props) {
+  return (
+    <div>
       {/* Header row */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h2 className="text-2xl font-bold text-gray-900">{profile.name}</h2>
-            <span className="px-2.5 py-0.5 text-sm font-semibold text-blue-700 bg-blue-50 rounded-lg">
+            <h2 className="text-2xl font-bold text-text-primary">{profile.name}</h2>
+            <span className="px-2.5 py-0.5 text-sm font-semibold text-blue-700 bg-accent-subtle rounded-lg">
               {profile.symbol}
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 mt-2">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-secondary mt-2">
             {profile.sector && (
               <span className="flex items-center gap-1.5">
                 <Building2 size={14} />
@@ -77,19 +91,9 @@ export default function CompanyProfile({ profile, ratios }: Props) {
         )}
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
-        {stats.map((stat) => (
-          <div key={stat.label} className="bg-gray-50 rounded-xl px-4 py-3">
-            <p className="text-xs text-gray-500 mb-0.5">{stat.label}</p>
-            <p className="text-lg font-semibold text-gray-900">{stat.value}</p>
-          </div>
-        ))}
-      </div>
-
       {/* Description */}
       {profile.description && (
-        <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
+        <p className="text-sm text-text-secondary leading-relaxed line-clamp-3">
           {profile.description}
         </p>
       )}

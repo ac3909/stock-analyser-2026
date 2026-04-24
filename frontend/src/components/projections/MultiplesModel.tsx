@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
-import { TrendingUp, TrendingDown } from "lucide-react";
 import type { MultiplesInputs, MultiplesResults } from "../../types/stock";
 import { calculateMultiples } from "../../utils/multiples";
+import { fmtValFull } from "../../utils/format";
 
 const MULTIPLE_OPTIONS = [
   { value: "pe" as const, label: "P/E (Price-to-Earnings)" },
@@ -10,36 +10,37 @@ const MULTIPLE_OPTIONS = [
 ];
 
 const METRIC_LABELS: Record<MultiplesInputs["multiple_type"], string> = {
-  pe: "Projected EPS ($)",
-  ev_revenue: "Projected Revenue ($)",
-  ev_ebitda: "Projected EBITDA ($)",
+  pe: "Projected EPS",
+  ev_revenue: "Projected Revenue",
+  ev_ebitda: "Projected EBITDA",
 };
+
+const UNIT_OPTIONS = [
+  { label: "Million", multiplier: 1e6 },
+  { label: "Billion", multiplier: 1e9 },
+  { label: "Trillion", multiplier: 1e12 },
+];
+
+/** Detect the best initial unit for a raw value. */
+function detectUnit(value: number): number {
+  const abs = Math.abs(value);
+  if (abs >= 1e12) return 1e12;
+  if (abs >= 1e9) return 1e9;
+  return 1e6;
+}
 
 interface Props {
   defaults: MultiplesInputs;
   currentPrice: number;
 }
 
-/** Format large numbers for display in input hints. */
-function fmtHint(v: number): string {
-  const abs = Math.abs(v);
-  if (abs >= 1e9) return `$${(v / 1e9).toFixed(2)}B`;
-  if (abs >= 1e6) return `$${(v / 1e6).toFixed(1)}M`;
-  return `$${v.toFixed(2)}`;
-}
-
-/** Format large numbers with B/M/K suffixes. */
-function fmtVal(v: number): string {
-  const abs = Math.abs(v);
-  if (abs >= 1e9) return `$${(v / 1e9).toFixed(2)}B`;
-  if (abs >= 1e6) return `$${(v / 1e6).toFixed(2)}M`;
-  if (abs >= 1e3) return `$${(v / 1e3).toFixed(1)}K`;
-  return `$${v.toFixed(2)}`;
-}
-
-/** Multiples-based valuation input form with inline results. */
+/** Multiples-based valuation with inputs on the left and results on the right. */
 export default function MultiplesModel({ defaults, currentPrice }: Props) {
   const [inputs, setInputs] = useState<MultiplesInputs>(defaults);
+
+  const [metricUnit, setMetricUnit] = useState(() => detectUnit(defaults.projected_metric_value));
+  const [debtUnit, setDebtUnit] = useState(() => detectUnit(defaults.net_debt));
+  const [sharesUnit, setSharesUnit] = useState(() => detectUnit(defaults.shares_outstanding));
 
   const update = <K extends keyof MultiplesInputs>(
     key: K,
@@ -54,68 +55,98 @@ export default function MultiplesModel({ defaults, currentPrice }: Props) {
   );
 
   const isUp = results.upside_pct >= 0;
-  const UpsideIcon = isUp ? TrendingUp : TrendingDown;
+
+  const innerInput =
+    "flex-1 min-w-0 bg-transparent border-none px-3 py-1.5 text-sm text-right text-text-primary focus:outline-none";
+  const innerSelect =
+    "bg-transparent border-none pr-3 pl-1 py-1.5 text-sm text-text-secondary focus:outline-none cursor-pointer";
+  const boxClass =
+    "flex items-center w-40 bg-surface-alt border border-border rounded-lg focus-within:ring-2 focus-within:ring-blue-500";
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-5">
-        <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-          Assumptions
-        </h4>
+    <div className="bg-surface rounded-2xl border border-border p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left column — Inputs */}
+        <div className="space-y-4">
+          <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
+            Assumptions
+          </h4>
 
-        {/* Multiple type selector */}
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">
-            Valuation Multiple
-          </label>
-          <select
-            value={inputs.multiple_type}
-            onChange={(e) =>
-              update(
-                "multiple_type",
-                e.target.value as MultiplesInputs["multiple_type"]
-              )
-            }
-            className="w-full sm:w-auto bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {MULTIPLE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
+          {/* Valuation Multiple */}
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium text-text-secondary">Valuation Multiple</span>
+            <div className={boxClass}>
+              <select
+                value={inputs.multiple_type}
+                onChange={(e) =>
+                  update(
+                    "multiple_type",
+                    e.target.value as MultiplesInputs["multiple_type"]
+                  )
+                }
+                className="w-full bg-transparent border-none px-3 py-1.5 text-sm text-right text-text-primary focus:outline-none cursor-pointer"
+              >
+                {MULTIPLE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-        {/* Metric value and target multiple */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">
+          {/* Projected metric */}
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium text-text-secondary">
               {METRIC_LABELS[inputs.multiple_type]}
-            </label>
-            <input
-              type="number"
-              value={inputs.projected_metric_value}
-              onChange={(e) =>
-                update(
-                  "projected_metric_value",
-                  parseFloat(e.target.value) || 0
-                )
-              }
-              step={inputs.multiple_type === "pe" ? 0.1 : 1000000}
-              className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {inputs.multiple_type !== "pe" && (
-              <p className="text-xs text-gray-400 mt-1">
-                = {fmtHint(inputs.projected_metric_value)}
-              </p>
+            </span>
+            {inputs.multiple_type === "pe" ? (
+              <div className={boxClass}>
+                <span className="pl-3 text-sm text-text-muted">$</span>
+                <input
+                  type="number"
+                  value={inputs.projected_metric_value}
+                  onChange={(e) =>
+                    update("projected_metric_value", parseFloat(e.target.value) || 0)
+                  }
+                  step={0.1}
+                  className={innerInput}
+                />
+              </div>
+            ) : (
+              <div className={boxClass}>
+                <span className="pl-3 text-sm text-text-muted">$</span>
+                <input
+                  type="number"
+                  value={parseFloat((inputs.projected_metric_value / metricUnit).toFixed(4))}
+                  onChange={(e) =>
+                    update("projected_metric_value", (parseFloat(e.target.value) || 0) * metricUnit)
+                  }
+                  step={1}
+                  className={innerInput}
+                />
+                <select
+                  value={metricUnit}
+                  onChange={(e) => {
+                    const newMul = Number(e.target.value);
+                    const displayVal = inputs.projected_metric_value / metricUnit;
+                    setMetricUnit(newMul);
+                    update("projected_metric_value", displayVal * newMul);
+                  }}
+                  className={innerSelect}
+                >
+                  {UNIT_OPTIONS.map((u) => (
+                    <option key={u.label} value={u.multiplier}>{u.label}</option>
+                  ))}
+                </select>
+              </div>
             )}
           </div>
 
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">
-              Target Multiple
-            </label>
-            <div className="flex items-center gap-1">
+          {/* Target Multiple */}
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium text-text-secondary">Target Multiple</span>
+            <div className={boxClass}>
               <input
                 type="number"
                 value={inputs.target_multiple}
@@ -123,90 +154,99 @@ export default function MultiplesModel({ defaults, currentPrice }: Props) {
                   update("target_multiple", parseFloat(e.target.value) || 0)
                 }
                 step={0.5}
-                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={innerInput}
               />
-              <span className="text-xs text-gray-400 shrink-0">x</span>
+              <span className="pr-3 text-sm text-text-muted">x</span>
             </div>
           </div>
+
+          {/* Net debt and shares (for EV-based) */}
+          {inputs.multiple_type !== "pe" && (
+            <>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-medium text-text-secondary">Net Debt</span>
+                <div className={boxClass}>
+                  <span className="pl-3 text-sm text-text-muted">$</span>
+                  <input
+                    type="number"
+                    value={parseFloat((inputs.net_debt / debtUnit).toFixed(4))}
+                    onChange={(e) =>
+                      update("net_debt", (parseFloat(e.target.value) || 0) * debtUnit)
+                    }
+                    step={1}
+                    className={innerInput}
+                  />
+                  <select
+                    value={debtUnit}
+                    onChange={(e) => {
+                      const newMul = Number(e.target.value);
+                      const displayVal = inputs.net_debt / debtUnit;
+                      setDebtUnit(newMul);
+                      update("net_debt", displayVal * newMul);
+                    }}
+                    className={innerSelect}
+                  >
+                    {UNIT_OPTIONS.map((u) => (
+                      <option key={u.label} value={u.multiplier}>{u.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-medium text-text-secondary">Shares Outstanding</span>
+                <div className={boxClass}>
+                  <input
+                    type="number"
+                    value={parseFloat((inputs.shares_outstanding / sharesUnit).toFixed(4))}
+                    onChange={(e) =>
+                      update("shares_outstanding", (parseFloat(e.target.value) || 0) * sharesUnit)
+                    }
+                    step={1}
+                    className={innerInput}
+                  />
+                  <select
+                    value={sharesUnit}
+                    onChange={(e) => {
+                      const newMul = Number(e.target.value);
+                      const displayVal = inputs.shares_outstanding / sharesUnit;
+                      setSharesUnit(newMul);
+                      update("shares_outstanding", displayVal * newMul);
+                    }}
+                    className={innerSelect}
+                  >
+                    {UNIT_OPTIONS.map((u) => (
+                      <option key={u.label} value={u.multiplier}>{u.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
-        {/* Net debt and shares (for EV-based) */}
-        {inputs.multiple_type !== "pe" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Net Debt ($)
-              </label>
-              <input
-                type="number"
-                value={inputs.net_debt}
-                onChange={(e) =>
-                  update("net_debt", parseFloat(e.target.value) || 0)
-                }
-                step={1000000}
-                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                = {fmtHint(inputs.net_debt)}
-              </p>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Shares Outstanding
-              </label>
-              <input
-                type="number"
-                value={inputs.shares_outstanding}
-                onChange={(e) =>
-                  update(
-                    "shares_outstanding",
-                    parseFloat(e.target.value) || 0
-                  )
-                }
-                step={1000000}
-                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-        )}
-      </div>
+        {/* Right column — Results */}
+        <div className="space-y-4">
+          <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
+            Valuation Result
+          </h4>
 
-      {/* Inline results */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-5">
-        <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-          Valuation Result
-        </h4>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gray-50 rounded-xl px-4 py-3">
-            <p className="text-xs text-gray-400">Implied Equity Value</p>
-            <p className="text-sm font-semibold text-gray-900">
-              {fmtVal(results.implied_value)}
-            </p>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-text-secondary">Implied Equity Value</span>
+            <span className="text-sm font-semibold text-text-primary">{fmtValFull(results.implied_value)}</span>
           </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-2 border-t border-gray-100">
-          <div>
-            <p className="text-xs text-gray-400">Implied Share Price</p>
-            <p className="text-3xl font-bold text-gray-900">
-              ${results.implied_share_price.toFixed(2)}
-            </p>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-text-secondary">Implied Share Price</span>
+            <span className="text-sm font-semibold text-text-primary">${results.implied_share_price.toFixed(2)}</span>
           </div>
-          <div>
-            <p className="text-xs text-gray-400">Current Price</p>
-            <p className="text-xl font-semibold text-gray-500">
-              ${results.current_price.toFixed(2)}
-            </p>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-text-secondary">Current Share Price</span>
+            <span className="text-sm font-semibold text-text-primary">${results.current_price.toFixed(2)}</span>
           </div>
-          <div
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold ${
-              isUp ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
-            }`}
-          >
-            <UpsideIcon size={16} />
-            {isUp ? "+" : ""}
-            {results.upside_pct.toFixed(1)}%
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-text-secondary">Upside / Downside</span>
+            <span className={`text-sm font-semibold ${isUp ? "text-emerald-600" : "text-red-600"}`}>
+              {isUp ? "+" : ""}{results.upside_pct.toFixed(1)}% {isUp ? "Undervalued" : "Overvalued"}
+            </span>
           </div>
         </div>
       </div>

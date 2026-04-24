@@ -1,19 +1,21 @@
-import type { KeyRatios } from "../../types/stock";
+import { ArrowUp, ArrowDown } from "lucide-react";
+import type { KeyRatios, IndustryRatios } from "../../types/stock";
 
-type Health = "green" | "amber" | "red" | "neutral";
+/** Whether a higher value is better, worse, or neither for this ratio. */
+type Direction = "higher_better" | "lower_better" | "neutral";
 
 interface RatioItem {
   label: string;
-  description: string;
   value: number | null;
+  industryValue: number | null;
   format: (v: number) => string;
-  health: (v: number) => Health;
+  direction: Direction;
 }
 
 /** Format as a simple number with 2 decimal places. */
 const fmtNum = (v: number) => v.toFixed(2);
 
-/** Format as a percentage. */
+/** Format as a percentage (value is a 0–1 fraction). */
 const fmtPct = (v: number) => `${(v * 100).toFixed(1)}%`;
 
 /** Format as a ratio with an "x" suffix. */
@@ -22,180 +24,126 @@ const fmtX = (v: number) => `${v.toFixed(2)}x`;
 /** Format a value that yfinance already returns as a percentage. */
 const fmtRawPct = (v: number) => `${v.toFixed(2)}%`;
 
-/** No health colouring — always neutral. */
-const neutral = () => "neutral" as const;
-
 interface RatioGroup {
   title: string;
   items: RatioItem[];
 }
 
-/** Build the three ratio groups from raw KeyRatios data. */
-function buildGroups(ratios: KeyRatios): RatioGroup[] {
+/** Build the three ratio groups from raw KeyRatios + optional industry data. */
+function buildGroups(ratios: KeyRatios, industry: IndustryRatios | null): RatioGroup[] {
+  const ind = industry;
   return [
     {
       title: "Valuation",
       items: [
-        {
-          label: "P/E Ratio",
-          description: "Price relative to earnings",
-          value: ratios.pe_ratio,
-          format: fmtNum,
-          health: (v) => (v < 0 ? "red" : v <= 25 ? "green" : v <= 40 ? "amber" : "red"),
-        },
-        {
-          label: "Forward P/E",
-          description: "Expected price to earnings",
-          value: ratios.forward_pe,
-          format: fmtNum,
-          health: (v) => (v < 0 ? "red" : v <= 25 ? "green" : v <= 40 ? "amber" : "red"),
-        },
-        {
-          label: "PEG Ratio",
-          description: "P/E relative to growth",
-          value: ratios.peg_ratio,
-          format: fmtNum,
-          health: (v) => (v < 0 ? "red" : v <= 1.5 ? "green" : v <= 2.5 ? "amber" : "red"),
-        },
-        {
-          label: "Price / Book",
-          description: "Price relative to book value",
-          value: ratios.price_to_book,
-          format: fmtNum,
-          health: (v) => (v <= 3 ? "green" : v <= 5 ? "amber" : "red"),
-        },
-        {
-          label: "Price / Sales",
-          description: "Price relative to revenue",
-          value: ratios.price_to_sales,
-          format: fmtNum,
-          health: (v) => (v <= 5 ? "green" : v <= 10 ? "amber" : "red"),
-        },
-        {
-          label: "EV / EBITDA",
-          description: "Enterprise value to EBITDA",
-          value: ratios.ev_to_ebitda,
-          format: fmtNum,
-          health: (v) => (v <= 15 ? "green" : v <= 25 ? "amber" : "red"),
-        },
+        { label: "P/E Ratio", value: ratios.pe_ratio, industryValue: ind?.pe_ratio ?? null, format: fmtNum, direction: "lower_better" },
+        { label: "Forward P/E", value: ratios.forward_pe, industryValue: ind?.forward_pe ?? null, format: fmtNum, direction: "lower_better" },
+        { label: "PEG Ratio", value: ratios.peg_ratio, industryValue: ind?.peg_ratio ?? null, format: fmtNum, direction: "lower_better" },
+        { label: "Price / Book", value: ratios.price_to_book, industryValue: ind?.price_to_book ?? null, format: fmtNum, direction: "lower_better" },
+        { label: "Price / Sales", value: ratios.price_to_sales, industryValue: ind?.price_to_sales ?? null, format: fmtNum, direction: "lower_better" },
+        { label: "EV / EBITDA", value: ratios.ev_to_ebitda, industryValue: ind?.ev_to_ebitda ?? null, format: fmtNum, direction: "lower_better" },
       ],
     },
     {
       title: "Profitability",
       items: [
-        {
-          label: "Profit Margin",
-          description: "Net income as % of revenue",
-          value: ratios.profit_margin,
-          format: fmtPct,
-          health: (v) => (v >= 0.15 ? "green" : v >= 0.05 ? "amber" : "red"),
-        },
-        {
-          label: "Operating Margin",
-          description: "Operating income as % of revenue",
-          value: ratios.operating_margin,
-          format: fmtPct,
-          health: (v) => (v >= 0.15 ? "green" : v >= 0.05 ? "amber" : "red"),
-        },
-        {
-          label: "Return on Equity",
-          description: "Profit generated per equity dollar",
-          value: ratios.return_on_equity,
-          format: fmtPct,
-          health: (v) => (v >= 0.15 ? "green" : v >= 0.08 ? "amber" : "red"),
-        },
-        {
-          label: "Return on Assets",
-          description: "Profit generated per asset dollar",
-          value: ratios.return_on_assets,
-          format: fmtPct,
-          health: (v) => (v >= 0.05 ? "green" : v >= 0.02 ? "amber" : "red"),
-        },
-        {
-          label: "Dividend Yield",
-          description: "Annual dividends as % of price",
-          value: ratios.dividend_yield,
-          format: fmtRawPct,
-          health: neutral,
-        },
+        { label: "Profit Margin", value: ratios.profit_margin, industryValue: ind?.profit_margin ?? null, format: fmtPct, direction: "higher_better" },
+        { label: "Operating Margin", value: ratios.operating_margin, industryValue: ind?.operating_margin ?? null, format: fmtPct, direction: "higher_better" },
+        { label: "Return on Equity", value: ratios.return_on_equity, industryValue: ind?.return_on_equity ?? null, format: fmtPct, direction: "higher_better" },
+        { label: "Return on Assets", value: ratios.return_on_assets, industryValue: ind?.return_on_assets ?? null, format: fmtPct, direction: "higher_better" },
+        { label: "Dividend Yield", value: ratios.dividend_yield, industryValue: ind?.dividend_yield ?? null, format: fmtRawPct, direction: "neutral" },
       ],
     },
     {
       title: "Financial Health",
       items: [
-        {
-          label: "Debt / Equity",
-          description: "Total debt relative to equity",
-          value: ratios.debt_to_equity,
-          format: fmtRawPct,
-          health: (v) => (v <= 100 ? "green" : v <= 200 ? "amber" : "red"),
-        },
-        {
-          label: "Current Ratio",
-          description: "Ability to pay short-term debts",
-          value: ratios.current_ratio,
-          format: fmtX,
-          health: (v) => (v >= 1.5 ? "green" : v >= 1 ? "amber" : "red"),
-        },
-        {
-          label: "Quick Ratio",
-          description: "Liquid assets vs short-term debts",
-          value: ratios.quick_ratio,
-          format: fmtX,
-          health: (v) => (v >= 1 ? "green" : v >= 0.5 ? "amber" : "red"),
-        },
-        {
-          label: "Beta",
-          description: "Volatility relative to market",
-          value: ratios.beta,
-          format: fmtNum,
-          health: neutral,
-        },
+        { label: "Debt / Equity", value: ratios.debt_to_equity, industryValue: ind?.debt_to_equity ?? null, format: fmtRawPct, direction: "lower_better" },
+        { label: "Current Ratio", value: ratios.current_ratio, industryValue: ind?.current_ratio ?? null, format: fmtX, direction: "higher_better" },
+        { label: "Quick Ratio", value: ratios.quick_ratio, industryValue: ind?.quick_ratio ?? null, format: fmtX, direction: "higher_better" },
+        { label: "Beta", value: ratios.beta, industryValue: ind?.beta ?? null, format: fmtNum, direction: "neutral" },
       ],
     },
   ];
 }
 
-const HEALTH_STYLES: Record<Health, string> = {
-  green: "text-emerald-600 bg-emerald-50",
-  amber: "text-amber-600 bg-amber-50",
-  red: "text-red-600 bg-red-50",
-  neutral: "text-gray-900 bg-gray-50",
-};
+/** Compute the delta info between company and industry values. */
+function getDelta(
+  value: number,
+  industryValue: number | null,
+  direction: Direction,
+): { diff: number; isUp: boolean; isGood: boolean } | null {
+  if (industryValue == null || direction === "neutral") return null;
+  const diff = value - industryValue;
+  const isUp = diff > 0;
+  const isGood = direction === "higher_better" ? isUp : !isUp;
+  return { diff: Math.abs(diff), isUp, isGood };
+}
 
 interface Props {
   ratios: KeyRatios;
+  industryRatios: IndustryRatios | null;
 }
 
-/** Grid of colour-coded financial ratio cards grouped by category. */
-export default function RatiosCard({ ratios }: Props) {
-  const groups = buildGroups(ratios);
+/** Three side-by-side columns showing company vs industry ratios with delta indicators. */
+export default function RatiosCard({ ratios, industryRatios }: Props) {
+  const groups = buildGroups(ratios, industryRatios);
 
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       {groups.map((group) => (
-        <div key={group.title}>
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            {group.title}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {group.items.map((item) => {
+        <div
+          key={group.title}
+          className="bg-surface rounded-2xl border border-border overflow-hidden"
+        >
+          {/* Group header */}
+          <div className="px-3 py-2 bg-surface-alt border-b border-border">
+            <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
+              {group.title}
+            </h3>
+          </div>
+
+          {/* Table header */}
+          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 px-3 py-1.5 border-b border-border text-xs text-text-muted">
+            <span>Metric</span>
+            <span className="w-14 text-right">Company</span>
+            <span className="w-16 text-center">Delta</span>
+            <span className="w-14 text-right">Industry</span>
+          </div>
+
+          {/* Rows */}
+          <div>
+            {group.items.map((item, i) => {
               const available = item.value != null;
-              const health = available ? item.health(item.value!) : "neutral";
-              const style = HEALTH_STYLES[health];
+              const delta = available
+                ? getDelta(item.value!, item.industryValue, item.direction)
+                : null;
               return (
                 <div
                   key={item.label}
-                  className="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-center justify-between gap-3"
+                  className={`grid grid-cols-[1fr_auto_auto_auto] gap-x-2 items-center px-3 py-1.5 ${
+                    i % 2 === 1 ? "bg-surface-alt/50" : ""
+                  }`}
                 >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{item.label}</p>
-                    <p className="text-xs text-gray-400 truncate">{item.description}</p>
-                  </div>
-                  <span
-                    className={`shrink-0 text-sm font-semibold px-2.5 py-1 rounded-lg ${style}`}
-                  >
+                  <span className="text-sm font-medium text-text-primary truncate">{item.label}</span>
+                  <span className="w-14 text-right text-sm text-text-primary tabular-nums">
                     {available ? item.format(item.value!) : "—"}
+                  </span>
+                  <span className="w-16 text-center">
+                    {delta != null ? (
+                      <span
+                        className={`inline-flex items-center gap-0.5 text-xs font-medium tabular-nums ${
+                          delta.isGood ? "text-emerald-600" : "text-red-600"
+                        }`}
+                      >
+                        {delta.isUp ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
+                        {item.format(delta.diff)}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-text-muted">—</span>
+                    )}
+                  </span>
+                  <span className="w-14 text-right text-sm text-text-muted tabular-nums">
+                    {item.industryValue != null ? item.format(item.industryValue) : "—"}
                   </span>
                 </div>
               );
