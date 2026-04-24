@@ -56,7 +56,7 @@ export default function CompTickerSearch({ onAdd, exclude }: Props) {
       <div className="relative">
         <Search
           size={16}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
         />
         <input
           type="text"
@@ -67,26 +67,26 @@ export default function CompTickerSearch({ onAdd, exclude }: Props) {
           }}
           onFocus={() => setOpen(true)}
           placeholder="Add a comparable (e.g. MSFT)"
-          className="w-full px-3 py-2 pl-9 text-sm bg-gray-50 border border-gray-200 rounded-lg
-            focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-gray-900"
+          className="w-full px-3 py-2 pl-9 text-sm bg-surface-alt border border-border rounded-lg
+            focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-text-muted text-text-primary"
         />
         {isFetching && (
           <Loader2
             size={16}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 animate-spin"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted animate-spin"
           />
         )}
       </div>
 
       {showDropdown && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full bg-surface border border-border rounded-lg shadow-lg overflow-hidden">
           {isFetching && results.length === 0 ? (
-            <div className="flex items-center justify-center gap-2 px-4 py-4 text-sm text-gray-400">
+            <div className="flex items-center justify-center gap-2 px-4 py-4 text-sm text-text-muted">
               <Loader2 size={14} className="animate-spin" />
               Searching...
             </div>
           ) : results.length === 0 ? (
-            <div className="px-4 py-4 text-sm text-gray-400 text-center">
+            <div className="px-4 py-4 text-sm text-text-muted text-center">
               No results found
             </div>
           ) : (
@@ -97,13 +97,13 @@ export default function CompTickerSearch({ onAdd, exclude }: Props) {
                     type="button"
                     onClick={() => handleSelect(result.symbol)}
                     className="w-full flex items-center gap-2 px-3 py-2 text-left
-                      hover:bg-gray-50 transition-colors cursor-pointer"
+                      hover:bg-surface-alt transition-colors cursor-pointer"
                   >
                     <Plus size={14} className="text-blue-500 shrink-0" />
-                    <span className="font-semibold text-gray-900 text-sm min-w-[4rem]">
+                    <span className="font-semibold text-text-primary text-sm min-w-[4rem]">
                       {result.symbol}
                     </span>
-                    <span className="text-xs text-gray-500 truncate">
+                    <span className="text-xs text-text-secondary truncate">
                       {result.name}
                     </span>
                   </button>

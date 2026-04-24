@@ -16,6 +16,7 @@ from app.models.stock import (
     FinancialStatementResponse,
     HistoricalPrices,
     IndustryAverages,
+    IndustryRatios,
     KeyRatios,
     PricePoint,
     SearchResponse,
@@ -352,3 +353,96 @@ class YahooFinanceProvider(DataProvider):
         except Exception:
             logger.exception("Error computing industry averages for '%s'", ticker)
             return None
+
+    def _find_peer_symbols(self, ticker: str) -> tuple[str, list[str]] | None:
+        """Find peer ticker symbols in the same industry.
+
+        Args:
+            ticker: The stock ticker symbol.
+
+        Returns:
+            A tuple of (industry_name, peer_symbols) or None on error.
+        """
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            industry_key = info.get("industryKey", "")
+            industry_name = info.get("industry", "Unknown")
+            if not industry_key:
+                return None
+
+            ind = yf.Industry(industry_key)
+            top_df = ind.top_companies
+            if top_df is None or top_df.empty:
+                return None
+
+            peer_symbols = [
+                sym for sym in top_df.index.tolist()
+                if sym != ticker.upper()
+            ][:10]
+
+            return (industry_name, peer_symbols) if peer_symbols else None
+        except Exception:
+            logger.exception("Error finding peers for '%s'", ticker)
+            return None
+
+    def get_industry_ratios(self, ticker: str) -> IndustryRatios | None:
+        """Compute averaged key ratios across industry peers.
+
+        Fetches key ratios for each peer using yfinance info and averages
+        them to produce industry benchmark values.
+
+        Args:
+            ticker: The stock ticker symbol to find peers for.
+
+        Returns:
+            An IndustryRatios with mean metrics, or None on error.
+        """
+        result = self._find_peer_symbols(ticker)
+        if result is None:
+            return None
+        industry_name, peer_symbols = result
+
+        # Ratio fields to average (must match IndustryRatios field names)
+        ratio_fields = [
+            ("pe_ratio", "trailingPE"),
+            ("forward_pe", "forwardPE"),
+            ("peg_ratio", "trailingPegRatio"),
+            ("price_to_book", "priceToBook"),
+            ("price_to_sales", "priceToSalesTrailing12Months"),
+            ("ev_to_ebitda", "enterpriseToEbitda"),
+            ("profit_margin", "profitMargins"),
+            ("operating_margin", "operatingMargins"),
+            ("return_on_equity", "returnOnEquity"),
+            ("return_on_assets", "returnOnAssets"),
+            ("debt_to_equity", "debtToEquity"),
+            ("current_ratio", "currentRatio"),
+            ("quick_ratio", "quickRatio"),
+            ("dividend_yield", "dividendYield"),
+            ("beta", "beta"),
+        ]
+
+        # Collect values for each field across peers
+        collected: dict[str, list[float]] = {f: [] for f, _ in ratio_fields}
+
+        for sym in peer_symbols:
+            try:
+                info = yf.Ticker(sym).info
+                if not info:
+                    continue
+                for field_name, yf_key in ratio_fields:
+                    val = info.get(yf_key)
+                    if val is not None:
+                        collected[field_name].append(float(val))
+            except Exception:
+                logger.debug("Skipping peer '%s' due to error", sym)
+                continue
+
+        def _avg(values: list[float]) -> float | None:
+            return round(sum(values) / len(values), 2) if values else None
+
+        return IndustryRatios(
+            industry=industry_name,
+            peer_count=len(peer_symbols),
+            **{field: _avg(collected[field]) for field, _ in ratio_fields},
+        )

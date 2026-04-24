@@ -26,13 +26,13 @@ export default function SavedScenarios({ ticker, onLoad }: Props) {
 
   if (isLoading) {
     return (
-      <div className="text-sm text-gray-400 py-4">Loading saved scenarios...</div>
+      <div className="text-sm text-text-muted py-4">Loading saved scenarios...</div>
     );
   }
 
   if (!scenarios || scenarios.length === 0) {
     return (
-      <div className="text-sm text-gray-400 py-4">
+      <div className="text-sm text-text-muted py-4">
         No saved scenarios yet. Create a projection and save it.
       </div>
     );
@@ -43,13 +43,13 @@ export default function SavedScenarios({ ticker, onLoad }: Props) {
       {scenarios.map((s: Projection) => (
         <div
           key={s.id}
-          className="flex items-center justify-between gap-3 bg-gray-50 rounded-lg px-4 py-2.5"
+          className="flex items-center justify-between gap-3 bg-surface-alt rounded-lg px-4 py-2.5"
         >
           <div className="min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
+            <p className="text-sm font-medium text-text-primary truncate">
               {s.title}
             </p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-text-muted">
               {s.data.model_type === "dcf" ? "DCF" : "Multiples"} &middot;{" "}
               {new Date(s.created_at).toLocaleDateString()}
             </p>
@@ -57,7 +57,7 @@ export default function SavedScenarios({ ticker, onLoad }: Props) {
           <div className="flex items-center gap-1 shrink-0">
             <button
               onClick={() => onLoad(s.data)}
-              className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+              className="p-1.5 text-blue-500 hover:bg-accent-subtle rounded-lg transition-colors cursor-pointer"
               title="Load scenario"
             >
               <Download size={14} />
@@ -65,7 +65,7 @@ export default function SavedScenarios({ ticker, onLoad }: Props) {
             <button
               onClick={() => deleteMutation.mutate(s.id)}
               disabled={deleteMutation.isPending}
-              className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+              className="p-1.5 text-red-400 hover:bg-negative-subtle rounded-lg transition-colors cursor-pointer disabled:opacity-50"
               title="Delete scenario"
             >
               <Trash2 size={14} />

@@ -2,10 +2,11 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, SearchX, WifiOff } from "lucide-react";
-import CompanyProfile from "../components/stock/CompanyProfile";
+import CompanyProfile, { KeyMetrics } from "../components/stock/CompanyProfile";
 import PriceChart from "../components/stock/PriceChart";
 import RatiosCard from "../components/stock/RatiosCard";
 import FinancialTable from "../components/stock/FinancialTable";
+import type { StatementType } from "../components/stock/FinancialTable";
 import ProjectionsSection from "../components/projections/ProjectionsSection";
 import ComparablesSection from "../components/comparables/ComparablesSection";
 import { isNetworkError, isNotFoundError } from "../services/api";
@@ -15,23 +16,30 @@ import {
   getBalanceSheet,
   getCashFlow,
   getKeyRatios,
+  getIndustryRatios,
 } from "../services/stockApi";
 
 const FINANCIAL_TABS = ["Income Statement", "Balance Sheet", "Cash Flow"] as const;
 type FinancialTab = (typeof FINANCIAL_TABS)[number];
+
+const TAB_TO_STATEMENT_TYPE: Record<FinancialTab, StatementType> = {
+  "Income Statement": "income_statement",
+  "Balance Sheet": "balance_sheet",
+  "Cash Flow": "cash_flow",
+};
 
 const SECTION_TABS = ["Financials", "Projections", "Comparables"] as const;
 type SectionTab = (typeof SECTION_TABS)[number];
 
 /** Animated skeleton placeholder block. */
 function Skeleton({ className = "" }: { className?: string }) {
-  return <div className={`bg-gray-200 rounded-lg animate-pulse ${className}`} />;
+  return <div className={`bg-surface-alt rounded-lg animate-pulse ${className}`} />;
 }
 
-/** Skeleton for the company profile card. */
-function ProfileSkeleton() {
+/** Skeleton for the merged company profile + chart card. */
+function ProfileChartSkeleton() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6">
+    <div className="bg-surface rounded-2xl border border-border p-6">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
         <div className="space-y-2.5 flex-1">
           <div className="flex items-center gap-3">
@@ -41,32 +49,29 @@ function ProfileSkeleton() {
           <Skeleton className="h-4 w-64" />
         </div>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-gray-50 rounded-xl px-4 py-3">
-            <Skeleton className="h-3 w-16 mb-2" />
-            <Skeleton className="h-6 w-24" />
-          </div>
-        ))}
-      </div>
-      <div className="space-y-2">
+      <div className="space-y-2 mb-5">
         <Skeleton className="h-3.5 w-full" />
         <Skeleton className="h-3.5 w-5/6" />
-        <Skeleton className="h-3.5 w-3/4" />
       </div>
-    </div>
-  );
-}
-
-/** Skeleton for the price chart. */
-function ChartSkeleton() {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-        <Skeleton className="h-5 w-32" />
-        <Skeleton className="h-9 w-72 rounded-lg" />
+      <div className="border-t border-border pt-4">
+        <div className="flex flex-col xl:flex-row gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-1 gap-3 xl:w-48 xl:shrink-0">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-surface-alt rounded-xl px-4 py-3">
+                <Skeleton className="h-3 w-16 mb-2" />
+                <Skeleton className="h-6 w-24" />
+              </div>
+            ))}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-3">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-9 w-72 rounded-lg" />
+            </div>
+            <Skeleton className="h-48 sm:h-56 w-full rounded-xl" />
+          </div>
+        </div>
       </div>
-      <Skeleton className="h-64 sm:h-80 w-full rounded-xl" />
     </div>
   );
 }
@@ -74,26 +79,25 @@ function ChartSkeleton() {
 /** Skeleton for the ratios section. */
 function RatiosSkeleton() {
   return (
-    <div>
-      <Skeleton className="h-5 w-28 mb-4" />
-      <div className="space-y-6">
-        {Array.from({ length: 2 }).map((_, g) => (
-          <div key={g}>
-            <Skeleton className="h-3.5 w-24 mb-3" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-center justify-between">
-                  <div className="space-y-1.5">
-                    <Skeleton className="h-3.5 w-20" />
-                    <Skeleton className="h-2.5 w-32" />
-                  </div>
-                  <Skeleton className="h-7 w-16 rounded-lg" />
-                </div>
-              ))}
-            </div>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {Array.from({ length: 3 }).map((_, g) => (
+        <div key={g} className="bg-surface rounded-2xl border border-border overflow-hidden">
+          <div className="px-4 py-2.5 bg-surface-alt border-b border-border">
+            <Skeleton className="h-3.5 w-24" />
           </div>
-        ))}
-      </div>
+          <div className="p-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between px-4 py-2">
+                <Skeleton className="h-3.5 w-24" />
+                <div className="flex gap-3">
+                  <Skeleton className="h-3.5 w-14" />
+                  <Skeleton className="h-3.5 w-14" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -101,10 +105,10 @@ function RatiosSkeleton() {
 /** Skeleton for the financial statements table. */
 function TableSkeleton() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+    <div className="bg-surface rounded-2xl border border-border overflow-hidden">
       <div className="p-1">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className={`flex gap-4 px-5 py-3 ${i % 2 === 1 ? "bg-gray-50/50" : ""}`}>
+          <div key={i} className={`flex gap-4 px-5 py-3 ${i % 2 === 1 ? "bg-surface-alt/50" : ""}`}>
             <Skeleton className="h-3.5 w-40 shrink-0" />
             <Skeleton className="h-3.5 w-20 ml-auto" />
             <Skeleton className="h-3.5 w-20" />
@@ -156,19 +160,25 @@ export default function StockPage() {
     enabled: !!symbol,
   });
 
+  const industryRatiosQuery = useQuery({
+    queryKey: ["industryRatios", symbol],
+    queryFn: () => getIndustryRatios(symbol),
+    enabled: !!symbol,
+  });
+
   // --- Error states ---
 
   if (profileQuery.isError && isNetworkError(profileQuery.error)) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-        <WifiOff size={48} className="text-gray-300 mb-4" />
-        <h3 className="text-xl font-semibold text-gray-700 mb-2">Unable to connect to server</h3>
-        <p className="text-sm text-gray-400 mb-6 max-w-sm">
+        <WifiOff size={48} className="text-text-muted mb-4" />
+        <h3 className="text-xl font-semibold text-text-primary mb-2">Unable to connect to server</h3>
+        <p className="text-sm text-text-muted mb-6 max-w-sm">
           The backend server isn't responding. Make sure it's running on port 8000.
         </p>
         <button
           onClick={() => profileQuery.refetch()}
-          className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
+          className="px-4 py-2 text-sm font-medium text-blue-600 bg-accent-subtle rounded-lg hover:opacity-80 transition-colors cursor-pointer"
         >
           Try again
         </button>
@@ -179,14 +189,14 @@ export default function StockPage() {
   if (profileQuery.isError && isNotFoundError(profileQuery.error)) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-        <SearchX size={48} className="text-gray-300 mb-4" />
-        <h3 className="text-xl font-semibold text-gray-700 mb-2">Stock not found</h3>
-        <p className="text-sm text-gray-400 mb-6">
-          We couldn't find a stock with the ticker <span className="font-semibold text-gray-500">{symbol}</span>.
+        <SearchX size={48} className="text-text-muted mb-4" />
+        <h3 className="text-xl font-semibold text-text-primary mb-2">Stock not found</h3>
+        <p className="text-sm text-text-muted mb-6">
+          We couldn't find a stock with the ticker <span className="font-semibold text-text-secondary">{symbol}</span>.
         </p>
         <Link
           to="/"
-          className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+          className="px-4 py-2 text-sm font-medium text-blue-600 bg-accent-subtle rounded-lg hover:opacity-80 transition-colors"
         >
           Search for another stock
         </Link>
@@ -197,11 +207,11 @@ export default function StockPage() {
   if (profileQuery.isError) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-        <h3 className="text-xl font-semibold text-gray-700 mb-2">Something went wrong</h3>
-        <p className="text-sm text-gray-400 mb-6">An unexpected error occurred while loading data.</p>
+        <h3 className="text-xl font-semibold text-text-primary mb-2">Something went wrong</h3>
+        <p className="text-sm text-text-muted mb-6">An unexpected error occurred while loading data.</p>
         <button
           onClick={() => profileQuery.refetch()}
-          className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
+          className="px-4 py-2 text-sm font-medium text-blue-600 bg-accent-subtle rounded-lg hover:opacity-80 transition-colors cursor-pointer"
         >
           Try again
         </button>
@@ -226,28 +236,37 @@ export default function StockPage() {
         : cashFlowQuery.isLoading;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 min-w-0">
       {/* Back link */}
       <Link
         to="/"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
       >
         <ArrowLeft size={16} />
         Back to search
       </Link>
 
-      {/* Company Profile */}
+      {/* Merged Company Profile + Price Chart */}
       {profileQuery.isLoading ? (
-        <ProfileSkeleton />
+        <ProfileChartSkeleton />
       ) : profileQuery.data ? (
-        <CompanyProfile profile={profileQuery.data} ratios={ratiosQuery.data} />
+        <div className="bg-surface rounded-2xl border border-border p-6">
+          <CompanyProfile profile={profileQuery.data} ratios={ratiosQuery.data} />
+          <div className="mt-4 border-t border-border pt-4">
+            <div className="flex flex-col xl:flex-row gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-1 gap-3 xl:w-48 xl:shrink-0">
+                <KeyMetrics profile={profileQuery.data} ratios={ratiosQuery.data} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <PriceChart ticker={symbol} />
+              </div>
+            </div>
+          </div>
+        </div>
       ) : null}
 
-      {/* Price Chart */}
-      {profileQuery.isLoading ? <ChartSkeleton /> : <PriceChart ticker={symbol} />}
-
       {/* Section-level tabs */}
-      <div className="flex items-center gap-1 border-b border-gray-200 overflow-x-auto">
+      <div className="flex items-center gap-1 border-b border-border overflow-x-auto">
         {SECTION_TABS.map((section) => (
           <button
             key={section}
@@ -255,7 +274,7 @@ export default function StockPage() {
             className={`px-4 py-2.5 text-sm font-medium transition-colors relative cursor-pointer whitespace-nowrap ${
               activeSection === section
                 ? "text-blue-600"
-                : "text-gray-500 hover:text-gray-700"
+                : "text-text-secondary hover:text-text-primary"
             }`}
           >
             {section}
@@ -273,19 +292,16 @@ export default function StockPage() {
           {ratiosQuery.isLoading ? (
             <RatiosSkeleton />
           ) : ratiosQuery.data ? (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Ratios</h3>
-              <RatiosCard ratios={ratiosQuery.data} />
-            </div>
+            <RatiosCard ratios={ratiosQuery.data} industryRatios={industryRatiosQuery.data ?? null} />
           ) : ratiosQuery.isError ? (
-            <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center text-sm text-gray-400">
+            <div className="bg-surface rounded-2xl border border-border p-8 text-center text-sm text-text-muted">
               Ratio data unavailable
             </div>
           ) : null}
 
           {/* Financial Statements with tabs */}
           <div>
-            <div className="flex items-center gap-1 border-b border-gray-200 mb-4 overflow-x-auto">
+            <div className="flex items-center gap-1 border-b border-border mb-4 overflow-x-auto">
               {FINANCIAL_TABS.map((tab) => (
                 <button
                   key={tab}
@@ -293,7 +309,7 @@ export default function StockPage() {
                   className={`px-3 sm:px-4 py-2.5 text-sm font-medium transition-colors relative cursor-pointer whitespace-nowrap ${
                     activeFinancialTab === tab
                       ? "text-blue-600"
-                      : "text-gray-500 hover:text-gray-700"
+                      : "text-text-secondary hover:text-text-primary"
                   }`}
                 >
                   {tab}
@@ -307,7 +323,7 @@ export default function StockPage() {
             {statementsLoading ? (
               <TableSkeleton />
             ) : (
-              <FinancialTable statements={activeStatements ?? []} />
+              <FinancialTable statements={activeStatements ?? []} statementType={TAB_TO_STATEMENT_TYPE[activeFinancialTab]} />
             )}
           </div>
         </>
@@ -337,13 +353,13 @@ export default function StockPage() {
 
       {/* Fallback for Projections/Comparables when data not loaded */}
       {activeSection === "Projections" && !profileQuery.data && !profileQuery.isLoading && (
-        <div className="text-center py-12 text-sm text-gray-400">
+        <div className="text-center py-12 text-sm text-text-muted">
           Profile data required for projections. Please wait or try refreshing.
         </div>
       )}
 
       {activeSection === "Comparables" && (!profileQuery.data || !ratiosQuery.data) && !profileQuery.isLoading && (
-        <div className="text-center py-12 text-sm text-gray-400">
+        <div className="text-center py-12 text-sm text-text-muted">
           Profile and ratio data required for comparables. Please wait or try refreshing.
         </div>
       )}

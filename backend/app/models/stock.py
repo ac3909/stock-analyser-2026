@@ -110,6 +110,28 @@ class IndustryAverages(BaseModel):
     revenue_growth: float | None = None
 
 
+class IndustryRatios(BaseModel):
+    """Averaged key ratios across industry peers for comparison."""
+
+    industry: str
+    peer_count: int
+    pe_ratio: float | None = None
+    forward_pe: float | None = None
+    peg_ratio: float | None = None
+    price_to_book: float | None = None
+    price_to_sales: float | None = None
+    ev_to_ebitda: float | None = None
+    profit_margin: float | None = None
+    operating_margin: float | None = None
+    return_on_equity: float | None = None
+    return_on_assets: float | None = None
+    debt_to_equity: float | None = None
+    current_ratio: float | None = None
+    quick_ratio: float | None = None
+    dividend_yield: float | None = None
+    beta: float | None = None
+
+
 class Projection(BaseModel):
     """A saved projection/scenario from the database."""
 

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { X, Loader2 } from "lucide-react";
 import type { KeyRatios, CompanyProfile } from "../../types/stock";
 import { getBatchRatios, getBatchProfiles } from "../../services/stockApi";
@@ -37,28 +37,29 @@ export default function ComparablesSection({
 
   const {
     data: compRatios,
-    isLoading: ratiosLoading,
+    isFetching: ratiosFetching,
   } = useQuery({
     queryKey: ["batchRatios", compTickers],
     queryFn: () => getBatchRatios(compTickers),
     enabled: compTickers.length > 0,
+    placeholderData: keepPreviousData,
   });
 
   const {
     data: compProfiles,
-    isLoading: profilesLoading,
+    isFetching: profilesFetching,
   } = useQuery({
     queryKey: ["batchProfiles", compTickers],
     queryFn: () => getBatchProfiles(compTickers),
     enabled: compTickers.length > 0,
+    placeholderData: keepPreviousData,
   });
 
-  const isLoading = ratiosLoading || profilesLoading;
+  const isFetching = ratiosFetching || profilesFetching;
   const comps = compRatios ?? [];
 
   const averages = useMemo(() => computeAverages(comps), [comps]);
 
-  /** Format market cap for the profile chips. */
   const fmtCap = (v: number | null) => {
     if (v == null) return "";
     if (v >= 1e12) return `$${(v / 1e12).toFixed(1)}T`;
@@ -70,17 +71,17 @@ export default function ComparablesSection({
   const allProfiles = compProfiles ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 overflow-x-hidden">
       {/* Search + comp chips */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+      <div className="bg-surface rounded-2xl border border-border p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div>
-            <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+            <h4 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
               Comparable Companies
             </h4>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-xs text-text-muted mt-0.5">
               Add up to 10 companies to compare against{" "}
-              <span className="font-semibold text-gray-600">
+              <span className="font-semibold text-text-secondary">
                 {currentProfile.name}
               </span>
             </p>
@@ -92,11 +93,9 @@ export default function ComparablesSection({
           exclude={[ticker, ...compTickers]}
         />
 
-        {/* Selected comp chips */}
         {compTickers.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {/* Subject chip (non-removable) */}
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-semibold text-blue-600 bg-accent-subtle rounded-lg">
               {ticker}
               {currentProfile.market_cap && (
                 <span className="text-xs font-normal text-blue-400">
@@ -110,17 +109,17 @@ export default function ComparablesSection({
               return (
                 <span
                   key={sym}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-medium text-text-primary bg-surface-alt rounded-lg"
                 >
                   {sym}
                   {profile?.market_cap && (
-                    <span className="text-xs font-normal text-gray-400">
+                    <span className="text-xs font-normal text-text-muted">
                       {fmtCap(profile.market_cap)}
                     </span>
                   )}
                   <button
                     onClick={() => handleRemove(sym)}
-                    className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                    className="text-text-muted hover:text-text-secondary cursor-pointer"
                   >
                     <X size={14} />
                   </button>
@@ -131,30 +130,32 @@ export default function ComparablesSection({
         )}
       </div>
 
-      {/* Loading state */}
-      {isLoading && compTickers.length > 0 && (
-        <div className="flex items-center justify-center gap-2 py-8 text-sm text-gray-400">
+      {comps.length === 0 && isFetching && compTickers.length > 0 && (
+        <div className="flex items-center justify-center gap-2 py-8 text-sm text-text-muted">
           <Loader2 size={16} className="animate-spin" />
           Fetching comparable data...
         </div>
       )}
 
-      {/* Results */}
-      {comps.length > 0 && !isLoading && (
+      {comps.length > 0 && (
         <>
-          {/* Summary cards */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              vs Peer Average
-            </h4>
+            <div className="flex items-center gap-2 mb-3">
+              <h4 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
+                vs Peer Average
+              </h4>
+              {isFetching && <Loader2 size={14} className="animate-spin text-text-muted" />}
+            </div>
             <CompsSummary subject={currentRatios} averages={averages} />
           </div>
 
-          {/* Full comparison table */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              Detailed Comparison
-            </h4>
+            <div className="flex items-center gap-2 mb-3">
+              <h4 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
+                Detailed Comparison
+              </h4>
+              {isFetching && <Loader2 size={14} className="animate-spin text-text-muted" />}
+            </div>
             <CompsTable
               subject={currentRatios}
               comps={comps}
@@ -164,11 +165,10 @@ export default function ComparablesSection({
         </>
       )}
 
-      {/* Empty state */}
       {compTickers.length === 0 && (
-        <div className="text-center py-12 text-sm text-gray-400">
+        <div className="text-center py-12 text-sm text-text-muted">
           Search and add comparable companies above to see how{" "}
-          <span className="font-semibold text-gray-500">{ticker}</span> stacks
+          <span className="font-semibold text-text-secondary">{ticker}</span> stacks
           up against its peers.
         </div>
       )}

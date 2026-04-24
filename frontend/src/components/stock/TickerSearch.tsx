@@ -63,7 +63,7 @@ export default function TickerSearch({ large = false }: { large?: boolean }) {
       <div className="relative">
         <Search
           size={iconSize}
-          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
         />
         <input
           type="text"
@@ -74,28 +74,28 @@ export default function TickerSearch({ large = false }: { large?: boolean }) {
           }}
           onFocus={() => setOpen(true)}
           placeholder="Search stocks (e.g. AAPL, Tesla)"
-          className={`w-full ${inputSize} pl-11 bg-white border border-gray-300 rounded-xl
+          className={`w-full ${inputSize} pl-11 bg-surface border border-border rounded-xl
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-            placeholder:text-gray-400 text-gray-900 shadow-sm`}
+            placeholder:text-text-muted text-text-primary shadow-sm`}
         />
         {isFetching && (
           <Loader2
             size={iconSize}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 animate-spin"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted animate-spin"
           />
         )}
       </div>
 
       {/* Results dropdown */}
       {showDropdown && (
-        <div className="absolute z-50 mt-1.5 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+        <div className="absolute z-50 mt-1.5 w-full bg-surface border border-border rounded-xl shadow-lg overflow-hidden">
           {isFetching && results.length === 0 ? (
-            <div className="flex items-center justify-center gap-2 px-4 py-6 text-sm text-gray-400">
+            <div className="flex items-center justify-center gap-2 px-4 py-6 text-sm text-text-muted">
               <Loader2 size={16} className="animate-spin" />
               Searching...
             </div>
           ) : results.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-gray-400 text-center">
+            <div className="px-4 py-6 text-sm text-text-muted text-center">
               No stocks found
             </div>
           ) : (
@@ -106,12 +106,12 @@ export default function TickerSearch({ large = false }: { large?: boolean }) {
                     type="button"
                     onClick={() => handleSelect(result.symbol)}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-left
-                      hover:bg-gray-50 transition-colors cursor-pointer"
+                      hover:bg-surface-alt transition-colors cursor-pointer"
                   >
-                    <span className="font-semibold text-gray-900 min-w-[4.5rem]">
+                    <span className="font-semibold text-text-primary min-w-[4.5rem]">
                       {result.symbol}
                     </span>
-                    <span className="text-sm text-gray-500 truncate">
+                    <span className="text-sm text-text-secondary truncate">
                       {result.name}
                     </span>
                   </button>

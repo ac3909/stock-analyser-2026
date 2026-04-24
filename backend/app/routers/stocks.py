@@ -11,6 +11,7 @@ from app.models.stock import (
     FinancialStatementResponse,
     HistoricalPrices,
     IndustryAverages,
+    IndustryRatios,
     KeyRatios,
     SearchResponse,
 )
@@ -71,6 +72,25 @@ def get_industry_averages(ticker: str) -> IndustryAverages:
     if averages is None:
         raise HTTPException(status_code=404, detail=f"No industry data for '{ticker}'")
     return averages
+
+
+@router.get("/{ticker}/industry-ratios", response_model=IndustryRatios)
+def get_industry_ratios(ticker: str) -> IndustryRatios:
+    """Compute averaged key ratios across industry peers.
+
+    Args:
+        ticker: The stock ticker symbol.
+
+    Returns:
+        Averaged key ratios (P/E, margins, ROE, etc.) across same-industry peers.
+
+    Raises:
+        HTTPException: 404 if no industry data is found.
+    """
+    ratios = provider.get_industry_ratios(ticker)
+    if ratios is None:
+        raise HTTPException(status_code=404, detail=f"No industry ratio data for '{ticker}'")
+    return ratios
 
 
 @router.get("/{ticker}/prices", response_model=HistoricalPrices)

@@ -7,7 +7,7 @@ and includes all API routers.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import projections, stocks
+from app.routers import macro, projections, stocks
 
 app = FastAPI(
     title="Stock Analysis Tool API",
@@ -25,6 +25,7 @@ app.add_middleware(
 
 app.include_router(stocks.router)
 app.include_router(projections.router)
+app.include_router(macro.router)
 
 
 @app.get("/health")

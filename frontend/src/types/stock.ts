@@ -75,6 +75,27 @@ export interface KeyRatios {
   fifty_two_week_low: number | null;
 }
 
+/** Averaged key ratios across industry peers for comparison. */
+export interface IndustryRatios {
+  industry: string;
+  peer_count: number;
+  pe_ratio: number | null;
+  forward_pe: number | null;
+  peg_ratio: number | null;
+  price_to_book: number | null;
+  price_to_sales: number | null;
+  ev_to_ebitda: number | null;
+  profit_margin: number | null;
+  operating_margin: number | null;
+  return_on_equity: number | null;
+  return_on_assets: number | null;
+  debt_to_equity: number | null;
+  current_ratio: number | null;
+  quick_ratio: number | null;
+  dividend_yield: number | null;
+  beta: number | null;
+}
+
 /** A saved projection/scenario from Supabase. */
 export interface Projection {
   id: string;

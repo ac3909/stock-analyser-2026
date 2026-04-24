@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Copy, RotateCcw, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Copy, RotateCcw, Loader2 } from "lucide-react";
 import type {
   DcfInputs,
   DcfResults,
@@ -7,15 +7,26 @@ import type {
   IndustryAverages,
 } from "../../types/stock";
 import { calculateDcf } from "../../utils/dcf";
+import { fmtVal, fmtValFull } from "../../utils/format";
 
-/** Format large numbers with B/M/K suffixes. */
-function fmtVal(v: number): string {
-  const abs = Math.abs(v);
-  if (abs >= 1e9) return `$${(v / 1e9).toFixed(2)}B`;
-  if (abs >= 1e6) return `$${(v / 1e6).toFixed(2)}M`;
-  if (abs >= 1e3) return `$${(v / 1e3).toFixed(1)}K`;
-  return `$${v.toFixed(2)}`;
+const UNIT_OPTIONS = [
+  { label: "Million", multiplier: 1e6 },
+  { label: "Billion", multiplier: 1e9 },
+  { label: "Trillion", multiplier: 1e12 },
+];
+
+/** Detect the best initial unit for a raw value. */
+function detectUnit(value: number): number {
+  const abs = Math.abs(value);
+  if (abs >= 1e12) return 1e12;
+  if (abs >= 1e9) return 1e9;
+  return 1e6;
 }
+
+const sharesInputClass =
+  "w-24 bg-transparent border-none px-3 py-1.5 text-sm text-right text-text-primary focus:outline-none";
+const sharesSelectClass =
+  "bg-transparent border-none pr-3 pl-1 py-1.5 text-sm text-text-secondary focus:outline-none cursor-pointer";
 
 /** Format a percentage value for display. */
 function fmtPct(v: number | null): string {
@@ -44,14 +55,14 @@ const ASSUMPTION_ROWS: AssumptionRow[] = [
     key: "revenue_growth_rates",
     companyAvgKey: "revenue_growth",
     industryAvgKey: "revenue_growth",
-    currentActual: null, // no "current" growth rate
+    currentActual: null,
   },
   {
     label: "Operating Margin (%)",
     key: "operating_margins",
     companyAvgKey: "operating_margin",
     industryAvgKey: "operating_margin",
-    currentActual: null, // filled via props
+    currentActual: null,
   },
   {
     label: "Tax Rate (%)",
@@ -104,41 +115,37 @@ export default function DcfModel({
   industryAvgLoading,
   currentActuals,
 }: Props) {
+  const [sharesUnit, setSharesUnit] = useState(() => detectUnit(inputs.shares_outstanding));
+
   const results: DcfResults = useMemo(
     () => calculateDcf(inputs, currentPrice),
     [inputs, currentPrice]
   );
 
-  /** Update a single year's value in a per-year array. */
   const updateYear = (key: ArrayKey, yearIdx: number, value: number) => {
     const arr = [...inputs[key]];
     arr[yearIdx] = value;
     onInputsChange({ ...inputs, [key]: arr });
   };
 
-  /** Copy Year 1 value to Years 2-5. */
   const copyToAll = (key: ArrayKey) => {
     const arr = [...inputs[key]];
     for (let i = 1; i < 5; i++) arr[i] = arr[0];
     onInputsChange({ ...inputs, [key]: arr });
   };
 
-  /** Reset a row to its defaults. */
   const resetRow = (key: ArrayKey) => {
     onInputsChange({ ...inputs, [key]: [...defaults[key]] });
   };
 
-  /** Reset all inputs to defaults. */
   const resetAll = () => {
     onInputsChange({ ...defaults });
   };
 
-  /** Update a global (non-array) input. */
   const updateGlobal = (key: "wacc" | "terminal_growth_rate" | "shares_outstanding", value: number) => {
     onInputsChange({ ...inputs, [key]: value });
   };
 
-  // Map current actuals to assumption rows
   const currentActualValues: Record<ArrayKey, number | null> = {
     revenue_growth_rates: null,
     operating_margins: currentActuals.opMargin,
@@ -164,18 +171,16 @@ export default function DcfModel({
   };
 
   const isUp = results.upside_pct >= 0;
-  const UpsideIcon = isUp ? TrendingUp : TrendingDown;
 
   return (
     <div className="space-y-6">
       {/* Spreadsheet table */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        {/* Reset All button */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-          <h4 className="text-sm font-semibold text-gray-700">DCF Model</h4>
+      <div className="bg-surface rounded-2xl border border-border overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+          <h4 className="text-sm font-semibold text-text-primary">DCF Model</h4>
           <button
             onClick={resetAll}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-alt rounded-md transition-colors cursor-pointer"
           >
             <RotateCcw size={12} />
             Reset All
@@ -185,24 +190,24 @@ export default function DcfModel({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide sticky left-0 bg-gray-50 z-10 min-w-[180px]">
+              <tr className="border-b border-border bg-surface-alt">
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-text-secondary uppercase tracking-wide sticky left-0 bg-surface-alt z-10 min-w-[180px]">
                   Metric
                 </th>
-                <th className="px-1 py-2.5 w-[60px] bg-gray-50" />
-                <th className="text-right px-3 py-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wide min-w-[80px] bg-gray-50">
+                <th className="px-1 py-2.5 w-[60px] bg-surface-alt" />
+                <th className="text-right px-3 py-2.5 text-xs font-semibold text-text-muted uppercase tracking-wide min-w-[80px] bg-surface-alt">
                   Co. Avg
                 </th>
-                <th className="text-right px-3 py-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wide min-w-[80px] bg-gray-50">
+                <th className="text-right px-3 py-2.5 text-xs font-semibold text-text-muted uppercase tracking-wide min-w-[80px] bg-surface-alt">
                   Ind. Avg
                 </th>
-                <th className="text-right px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide min-w-[90px] bg-gray-50">
+                <th className="text-right px-3 py-2.5 text-xs font-semibold text-text-secondary uppercase tracking-wide min-w-[90px] bg-surface-alt">
                   Current
                 </th>
                 {[1, 2, 3, 4, 5].map((yr) => (
                   <th
                     key={yr}
-                    className="text-right px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide min-w-[90px] bg-gray-50"
+                    className="text-right px-3 py-2.5 text-xs font-semibold text-text-secondary uppercase tracking-wide min-w-[90px] bg-surface-alt"
                   >
                     Year {yr}
                   </th>
@@ -214,55 +219,49 @@ export default function DcfModel({
               <tr>
                 <td
                   colSpan={10}
-                  className="px-4 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/50"
+                  className="px-4 pt-3 pb-1 text-xs font-semibold text-text-muted uppercase tracking-wider bg-surface-alt/50"
                 >
                   Assumptions
                 </td>
               </tr>
               {ASSUMPTION_ROWS.map((row) => (
-                <tr key={row.key} className="border-b border-gray-50 hover:bg-blue-50/20">
-                  {/* Label */}
-                  <td className="px-4 py-1.5 text-gray-700 font-medium sticky left-0 bg-white z-10">
+                <tr key={row.key} className="border-b border-border/30 hover:bg-accent-subtle/20">
+                  <td className="px-4 py-1.5 text-text-primary font-medium sticky left-0 bg-surface z-10">
                     {row.label}
                   </td>
-                  {/* Actions */}
                   <td className="px-1 py-1.5">
                     <div className="flex items-center gap-0.5">
                       <button
                         onClick={() => copyToAll(row.key)}
                         title="Copy Year 1 to all"
-                        className="p-1 text-gray-300 hover:text-blue-500 rounded transition-colors cursor-pointer"
+                        className="p-1 text-text-muted hover:text-blue-500 rounded transition-colors cursor-pointer"
                       >
                         <Copy size={12} />
                       </button>
                       <button
                         onClick={() => resetRow(row.key)}
                         title="Reset to defaults"
-                        className="p-1 text-gray-300 hover:text-gray-500 rounded transition-colors cursor-pointer"
+                        className="p-1 text-text-muted hover:text-text-secondary rounded transition-colors cursor-pointer"
                       >
                         <RotateCcw size={12} />
                       </button>
                     </div>
                   </td>
-                  {/* Company Avg */}
-                  <td className="text-right px-3 py-1.5 text-gray-400 tabular-nums bg-gray-50/30">
+                  <td className="text-right px-3 py-1.5 text-text-muted tabular-nums bg-surface-alt/30">
                     {fmtPct(companyAverages[row.companyAvgKey])}
                   </td>
-                  {/* Industry Avg */}
-                  <td className="text-right px-3 py-1.5 text-gray-400 tabular-nums bg-gray-50/30">
+                  <td className="text-right px-3 py-1.5 text-text-muted tabular-nums bg-surface-alt/30">
                     {industryAvgLoading ? (
-                      <Loader2 size={14} className="animate-spin inline-block text-gray-300" />
+                      <Loader2 size={14} className="animate-spin inline-block text-text-muted" />
                     ) : industryAverages ? (
                       fmtPct(industryAverages[row.industryAvgKey] as number | null)
                     ) : (
                       "—"
                     )}
                   </td>
-                  {/* Current */}
-                  <td className="text-right px-3 py-1.5 text-gray-600 tabular-nums font-medium">
+                  <td className="text-right px-3 py-1.5 text-text-secondary tabular-nums font-medium">
                     {fmtPct(currentActualValues[row.key])}
                   </td>
-                  {/* Year 1-5 inputs */}
                   {[0, 1, 2, 3, 4].map((yi) => (
                     <td key={yi} className="px-1.5 py-1">
                       <input
@@ -272,7 +271,7 @@ export default function DcfModel({
                           updateYear(row.key, yi, parseFloat(e.target.value) || 0)
                         }
                         step={0.5}
-                        className="w-full bg-blue-50/60 border border-blue-100 rounded px-2 py-1 text-sm text-right text-gray-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-50"
+                        className="w-full bg-accent-subtle/60 border border-blue-200/50 rounded px-2 py-1 text-sm text-right text-text-primary tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-accent-subtle"
                       />
                     </td>
                   ))}
@@ -281,26 +280,21 @@ export default function DcfModel({
 
               {/* Section: Income */}
               <tr>
-                <td
-                  colSpan={10}
-                  className="px-4 pt-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/50"
-                >
+                <td colSpan={10} className="px-4 pt-4 pb-1 text-xs font-semibold text-text-muted uppercase tracking-wider bg-surface-alt/50">
                   Income
                 </td>
               </tr>
               {COMPUTED_ROWS.slice(0, 4).map((row, idx) => (
-                <tr key={row.label} className={`border-b border-gray-50 ${idx % 2 === 1 ? "bg-gray-50/30" : ""}`}>
-                  <td className="px-4 py-1.5 text-gray-700 font-medium sticky left-0 bg-inherit z-10">
-                    {row.label}
-                  </td>
+                <tr key={row.label} className={`border-b border-border/30 ${idx % 2 === 1 ? "bg-surface-alt/30" : ""}`}>
+                  <td className="px-4 py-1.5 text-text-primary font-medium sticky left-0 bg-inherit z-10">{row.label}</td>
                   <td />
-                  <td className="text-right px-3 py-1.5 text-gray-300 bg-gray-50/30">—</td>
-                  <td className="text-right px-3 py-1.5 text-gray-300 bg-gray-50/30">—</td>
-                  <td className="text-right px-3 py-1.5 text-gray-600 tabular-nums font-medium">
+                  <td className="text-right px-3 py-1.5 text-text-muted bg-surface-alt/30">—</td>
+                  <td className="text-right px-3 py-1.5 text-text-muted bg-surface-alt/30">—</td>
+                  <td className="text-right px-3 py-1.5 text-text-secondary tabular-nums font-medium">
                     {row.currentActual != null ? fmtVal(row.currentActual) : "—"}
                   </td>
                   {[0, 1, 2, 3, 4].map((yi) => (
-                    <td key={yi} className="text-right px-3 py-1.5 text-gray-900 tabular-nums">
+                    <td key={yi} className="text-right px-3 py-1.5 text-text-primary tabular-nums">
                       {formatComputed(row.getValue(yi, results), row.format)}
                     </td>
                   ))}
@@ -309,24 +303,19 @@ export default function DcfModel({
 
               {/* Section: Cash Flow */}
               <tr>
-                <td
-                  colSpan={10}
-                  className="px-4 pt-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/50"
-                >
+                <td colSpan={10} className="px-4 pt-4 pb-1 text-xs font-semibold text-text-muted uppercase tracking-wider bg-surface-alt/50">
                   Cash Flow
                 </td>
               </tr>
               {COMPUTED_ROWS.slice(4, 6).map((row, idx) => (
-                <tr key={row.label} className={`border-b border-gray-50 ${idx % 2 === 1 ? "bg-gray-50/30" : ""}`}>
-                  <td className="px-4 py-1.5 text-gray-700 font-medium sticky left-0 bg-inherit z-10">
-                    {row.label}
-                  </td>
+                <tr key={row.label} className={`border-b border-border/30 ${idx % 2 === 1 ? "bg-surface-alt/30" : ""}`}>
+                  <td className="px-4 py-1.5 text-text-primary font-medium sticky left-0 bg-inherit z-10">{row.label}</td>
                   <td />
-                  <td className="text-right px-3 py-1.5 text-gray-300 bg-gray-50/30">—</td>
-                  <td className="text-right px-3 py-1.5 text-gray-300 bg-gray-50/30">—</td>
-                  <td className="text-right px-3 py-1.5 text-gray-300">—</td>
+                  <td className="text-right px-3 py-1.5 text-text-muted bg-surface-alt/30">—</td>
+                  <td className="text-right px-3 py-1.5 text-text-muted bg-surface-alt/30">—</td>
+                  <td className="text-right px-3 py-1.5 text-text-muted">—</td>
                   {[0, 1, 2, 3, 4].map((yi) => (
-                    <td key={yi} className="text-right px-3 py-1.5 text-gray-900 tabular-nums">
+                    <td key={yi} className="text-right px-3 py-1.5 text-text-primary tabular-nums">
                       {formatComputed(row.getValue(yi, results), row.format)}
                     </td>
                   ))}
@@ -335,24 +324,19 @@ export default function DcfModel({
 
               {/* Section: Valuation */}
               <tr>
-                <td
-                  colSpan={10}
-                  className="px-4 pt-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/50"
-                >
+                <td colSpan={10} className="px-4 pt-4 pb-1 text-xs font-semibold text-text-muted uppercase tracking-wider bg-surface-alt/50">
                   Valuation
                 </td>
               </tr>
               {COMPUTED_ROWS.slice(6).map((row, idx) => (
-                <tr key={row.label} className={`border-b border-gray-50 ${idx % 2 === 1 ? "bg-gray-50/30" : ""}`}>
-                  <td className="px-4 py-1.5 text-gray-700 font-medium sticky left-0 bg-inherit z-10">
-                    {row.label}
-                  </td>
+                <tr key={row.label} className={`border-b border-border/30 ${idx % 2 === 1 ? "bg-surface-alt/30" : ""}`}>
+                  <td className="px-4 py-1.5 text-text-primary font-medium sticky left-0 bg-inherit z-10">{row.label}</td>
                   <td />
-                  <td className="text-right px-3 py-1.5 text-gray-300 bg-gray-50/30">—</td>
-                  <td className="text-right px-3 py-1.5 text-gray-300 bg-gray-50/30">—</td>
-                  <td className="text-right px-3 py-1.5 text-gray-300">—</td>
+                  <td className="text-right px-3 py-1.5 text-text-muted bg-surface-alt/30">—</td>
+                  <td className="text-right px-3 py-1.5 text-text-muted bg-surface-alt/30">—</td>
+                  <td className="text-right px-3 py-1.5 text-text-muted">—</td>
                   {[0, 1, 2, 3, 4].map((yi) => (
-                    <td key={yi} className="text-right px-3 py-1.5 text-gray-900 tabular-nums">
+                    <td key={yi} className="text-right px-3 py-1.5 text-text-primary tabular-nums">
                       {formatComputed(row.getValue(yi, results), row.format)}
                     </td>
                   ))}
@@ -363,86 +347,103 @@ export default function DcfModel({
         </div>
       </div>
 
-      {/* Valuation summary card */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-5">
-        {/* Global inputs */}
-        <div className="flex flex-wrap items-end gap-4">
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">WACC (%)</label>
-            <input
-              type="number"
-              value={inputs.wacc}
-              onChange={(e) => updateGlobal("wacc", parseFloat(e.target.value) || 0)}
-              step={0.5}
-              className="w-24 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+      {/* Valuation summary card — 3 columns: inputs | calculated values | share prices */}
+      <div className="bg-surface rounded-2xl border border-border p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Left — Global inputs */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wide">Inputs</h4>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-medium text-text-secondary">WACC</span>
+              <div className="flex items-center w-40 bg-surface-alt border border-border rounded-lg focus-within:ring-2 focus-within:ring-blue-500">
+                <input
+                  type="number"
+                  value={inputs.wacc}
+                  onChange={(e) => updateGlobal("wacc", parseFloat(e.target.value) || 0)}
+                  step={0.5}
+                  className="flex-1 min-w-0 bg-transparent border-none px-3 py-1.5 text-sm text-right text-text-primary focus:outline-none"
+                />
+                <span className="pr-3 text-sm text-text-muted">%</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-medium text-text-secondary">Terminal Growth</span>
+              <div className="flex items-center w-40 bg-surface-alt border border-border rounded-lg focus-within:ring-2 focus-within:ring-blue-500">
+                <input
+                  type="number"
+                  value={inputs.terminal_growth_rate}
+                  onChange={(e) => updateGlobal("terminal_growth_rate", parseFloat(e.target.value) || 0)}
+                  step={0.5}
+                  className="flex-1 min-w-0 bg-transparent border-none px-3 py-1.5 text-sm text-right text-text-primary focus:outline-none"
+                />
+                <span className="pr-3 text-sm text-text-muted">%</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-medium text-text-secondary">Shares Outstanding</span>
+              <div className="flex items-center w-40 bg-surface-alt border border-border rounded-lg focus-within:ring-2 focus-within:ring-blue-500">
+                <input
+                  type="number"
+                  value={parseFloat((inputs.shares_outstanding / sharesUnit).toFixed(4))}
+                  onChange={(e) => updateGlobal("shares_outstanding", (parseFloat(e.target.value) || 0) * sharesUnit)}
+                  step={1}
+                  className={sharesInputClass}
+                />
+                <select
+                  value={sharesUnit}
+                  onChange={(e) => {
+                    const newMul = Number(e.target.value);
+                    const displayVal = inputs.shares_outstanding / sharesUnit;
+                    setSharesUnit(newMul);
+                    updateGlobal("shares_outstanding", displayVal * newMul);
+                  }}
+                  className={sharesSelectClass}
+                >
+                  {UNIT_OPTIONS.map((u) => (
+                    <option key={u.label} value={u.multiplier}>{u.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Terminal Growth (%)</label>
-            <input
-              type="number"
-              value={inputs.terminal_growth_rate}
-              onChange={(e) => updateGlobal("terminal_growth_rate", parseFloat(e.target.value) || 0)}
-              step={0.5}
-              className="w-24 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Shares Outstanding</label>
-            <input
-              type="number"
-              value={inputs.shares_outstanding}
-              onChange={(e) => updateGlobal("shares_outstanding", parseFloat(e.target.value) || 0)}
-              step={1000000}
-              className="w-40 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
 
-        {/* Summary results */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-gray-50 rounded-xl px-4 py-3">
-            <p className="text-xs text-gray-400">Sum of PV (FCF)</p>
-            <p className="text-sm font-semibold text-gray-900">
-              {fmtVal(results.years.reduce((s, y) => s + y.pv_fcf, 0))}
-            </p>
+          {/* Middle — Calculated FCF values */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wide">Calculated Values</h4>
+            {(() => {
+              const sumPvFcf = results.years.reduce((s, y) => s + y.pv_fcf, 0);
+              const metrics = [
+                { label: "Sum of PV (FCF)", value: sumPvFcf },
+                { label: "Terminal Value", value: results.terminal_value },
+                { label: "PV of Terminal Value", value: results.pv_terminal_value },
+                { label: "Enterprise Value", value: results.enterprise_value },
+              ];
+              return metrics.map((m) => (
+                <div key={m.label} className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-text-secondary">{m.label}</span>
+                  <span className="text-sm font-semibold text-text-primary">{fmtValFull(m.value)}</span>
+                </div>
+              ));
+            })()}
           </div>
-          <div className="bg-gray-50 rounded-xl px-4 py-3">
-            <p className="text-xs text-gray-400">Terminal Value</p>
-            <p className="text-sm font-semibold text-gray-900">{fmtVal(results.terminal_value)}</p>
-          </div>
-          <div className="bg-gray-50 rounded-xl px-4 py-3">
-            <p className="text-xs text-gray-400">PV of Terminal Value</p>
-            <p className="text-sm font-semibold text-gray-900">{fmtVal(results.pv_terminal_value)}</p>
-          </div>
-          <div className="bg-gray-50 rounded-xl px-4 py-3">
-            <p className="text-xs text-gray-400">Enterprise Value</p>
-            <p className="text-sm font-semibold text-gray-900">{fmtVal(results.enterprise_value)}</p>
-          </div>
-        </div>
 
-        {/* Implied price headline */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-2 border-t border-gray-100">
-          <div>
-            <p className="text-xs text-gray-400">Implied Share Price</p>
-            <p className="text-3xl font-bold text-gray-900">
-              ${results.implied_share_price.toFixed(2)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400">Current Price</p>
-            <p className="text-xl font-semibold text-gray-500">
-              ${results.current_price.toFixed(2)}
-            </p>
-          </div>
-          <div
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold ${
-              isUp ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
-            }`}
-          >
-            <UpsideIcon size={16} />
-            {isUp ? "+" : ""}
-            {results.upside_pct.toFixed(1)}%
+          {/* Right — Share prices + overvalued/undervalued */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wide">Valuation</h4>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-text-secondary">Implied Share Price</span>
+              <span className="text-sm font-semibold text-text-primary">${results.implied_share_price.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-text-secondary">Current Share Price</span>
+              <span className="text-sm font-semibold text-text-primary">${results.current_price.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-text-secondary">Upside / Downside</span>
+              <span className={`text-sm font-semibold ${isUp ? "text-emerald-600" : "text-red-600"}`}>
+                {isUp ? "+" : ""}{results.upside_pct.toFixed(1)}% {isUp ? "Undervalued" : "Overvalued"}
+              </span>
+            </div>
           </div>
         </div>
       </div>
