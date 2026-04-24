@@ -15,6 +15,9 @@ from app.models.stock import (
     KeyRatios,
     SearchResponse,
 )
+import httpx
+import os
+
 from app.services.yahoo_finance import YahooFinanceProvider, _get_crumb, _get_info, _session, _crumb_debug
 
 router = APIRouter(prefix="/api/stocks", tags=["stocks"])
@@ -39,7 +42,29 @@ def debug_ticker(ticker: str) -> dict:
         raw_resp = r.json()
     except Exception as e:
         raw_resp = str(e)
-    return {"crumb": crumb, "crumb_debug": _crumb_debug, "info_keys": list(info.keys()), "raw_status": raw_status, "raw_response": raw_resp}
+    fmp_key = os.getenv("FMP_API_KEY", "")
+    fmp_status = None
+    fmp_resp = None
+    try:
+        r = httpx.get(
+            f"https://financialmodelingprep.com/api/v3/profile/{ticker.upper()}",
+            params={"apikey": fmp_key},
+            timeout=10,
+        )
+        fmp_status = r.status_code
+        fmp_resp = r.json()
+    except Exception as e:
+        fmp_resp = str(e)
+    return {
+        "fmp_key_set": bool(fmp_key),
+        "fmp_key_prefix": fmp_key[:6] if fmp_key else None,
+        "fmp_status": fmp_status,
+        "fmp_response": fmp_resp,
+        "info_keys": list(info.keys()),
+        "crumb": crumb,
+        "crumb_debug": _crumb_debug,
+        "raw_status": raw_status,
+    }
 
 
 @router.get("/search", response_model=SearchResponse)
