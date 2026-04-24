@@ -75,16 +75,19 @@ export default function PortfolioValueChart({ data }: Props) {
               fontSize: 12,
               color: "var(--text-primary)",
             }}
-            formatter={(v: number) => [
-              `$${v.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
-              "Portfolio Value",
-            ]}
-            labelFormatter={(label: string) =>
-              new Date(label + "T00:00:00").toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })
+            formatter={(v: number | undefined) =>
+              v !== undefined
+                ? [`$${v.toLocaleString("en-US", { minimumFractionDigits: 2 })}`, "Portfolio Value"]
+                : ["—", "Portfolio Value"]
+            }
+            labelFormatter={(label) =>
+              typeof label === "string"
+                ? new Date(label + "T00:00:00").toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })
+                : String(label)
             }
           />
           <Area

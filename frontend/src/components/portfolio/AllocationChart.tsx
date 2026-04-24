@@ -57,7 +57,7 @@ export default function AllocationChart({ positions }: Props) {
               fontSize: 12,
               color: "var(--text-primary)",
             }}
-            formatter={(v: number) => [`${v}%`, "Allocation"]}
+            formatter={(v: number | undefined) => [v !== undefined ? `${v}%` : "—", "Allocation"]}
           />
           <Bar dataKey="pct" radius={[0, 4, 4, 0]}>
             {data.map((entry, i) => (
