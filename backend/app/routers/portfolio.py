@@ -2,7 +2,16 @@
 
 from fastapi import APIRouter, HTTPException
 
-from app.models.portfolio import Portfolio, PortfolioCreate, Position, PositionCreate, PositionUpdate
+from app.models.portfolio import (
+    Portfolio,
+    PortfolioCreate,
+    PortfolioHistoryPoint,
+    PortfolioPerformance,
+    PortfolioScore,
+    Position,
+    PositionCreate,
+    PositionUpdate,
+)
 from app.services.portfolio_db import (
     add_position,
     create_portfolio,
@@ -12,6 +21,11 @@ from app.services.portfolio_db import (
     list_portfolios,
     update_position,
 )
+from app.services.portfolio_performance import (
+    calculate_portfolio_performance,
+    get_portfolio_history,
+)
+from app.services.portfolio_scoring import score_portfolio
 
 router = APIRouter(prefix="/api/portfolio", tags=["portfolio"])
 
@@ -67,3 +81,27 @@ def update_portfolio_position(position_id: str, body: PositionUpdate) -> Positio
 def remove_position(position_id: str) -> None:
     if not delete_position(position_id):
         raise HTTPException(status_code=404, detail=f"Position '{position_id}' not found")
+
+
+@router.get("/{portfolio_id}/performance", response_model=PortfolioPerformance)
+def get_performance(portfolio_id: str) -> PortfolioPerformance:
+    result = calculate_portfolio_performance(portfolio_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Portfolio not found")
+    return result
+
+
+@router.get("/{portfolio_id}/history", response_model=list[PortfolioHistoryPoint])
+def get_history(portfolio_id: str, period: str = "1y") -> list[PortfolioHistoryPoint]:
+    return get_portfolio_history(portfolio_id, period)
+
+
+@router.get("/{portfolio_id}/score", response_model=PortfolioScore)
+def get_score(portfolio_id: str) -> PortfolioScore:
+    perf = calculate_portfolio_performance(portfolio_id)
+    if perf is None:
+        raise HTTPException(status_code=404, detail="Portfolio not found")
+    result = score_portfolio(perf)
+    if result is None:
+        raise HTTPException(status_code=422, detail="Portfolio has no positions to score")
+    return result
