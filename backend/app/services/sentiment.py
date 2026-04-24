@@ -36,19 +36,14 @@ def fetch_sentiment_signals(ticker: str) -> dict[str, Any]:
         or ticker_upper in (a.get("description") or "").upper()
     ]
 
-    # If we found at least one relevant article, return the full article list
-    # so callers get full news context. If no matches at all, fall back to the
-    # first 5 general headlines as background sentiment.
-    if relevant:
-        selected = articles
-    else:
-        selected = articles[:5]
+    if not relevant:
+        relevant = articles[:5]
 
     short_data = fetch_short_interest(ticker)
 
     return {
         "ticker": ticker_upper,
-        "news_articles": selected,
+        "news_articles": relevant,
         "short_float_pct": short_data["short_float_pct"] if short_data else None,
         "short_shares": short_data["short_shares"] if short_data else None,
     }

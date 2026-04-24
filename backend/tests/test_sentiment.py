@@ -9,7 +9,7 @@ class TestFetchSentimentSignals:
     def test_returns_combined_signals(self):
         mock_articles = [
             {"title": "Apple beats earnings estimates", "url": "https://example.com/1", "description": "AAPL beat Q4"},
-            {"title": "iPhone sales surge in China", "url": "https://example.com/2", "description": None},
+            {"title": "AAPL iPhone sales surge in China", "url": "https://example.com/2", "description": "AAPL strong"},
         ]
         mock_short = {"short_float_pct": 0.57, "short_shares": 89_000_000}
 
@@ -17,7 +17,7 @@ class TestFetchSentimentSignals:
             with patch("app.services.sentiment.fetch_short_interest", return_value=mock_short):
                 result = fetch_sentiment_signals("AAPL")
 
-        assert result["news_articles"] == mock_articles
+        assert result["news_articles"] == mock_articles  # both articles mention AAPL
         assert result["short_float_pct"] == pytest.approx(0.57)
         assert result["ticker"] == "AAPL"
 
