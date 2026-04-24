@@ -1,0 +1,25 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - link "StockLens" [ref=e7] [cursor=pointer]:
+          - /url: /
+          - img [ref=e8]
+          - generic [ref=e11]: StockLens
+        - navigation [ref=e12]:
+          - link "Stocks" [ref=e13] [cursor=pointer]:
+            - /url: /
+          - link "Dashboard" [ref=e14] [cursor=pointer]:
+            - /url: /dashboard
+      - button "Switch to light mode" [ref=e16] [cursor=pointer]:
+        - img [ref=e17]
+  - main [ref=e23]:
+    - generic [ref=e24]:
+      - heading "Market Dashboard" [level=1] [ref=e25]
+      - generic [ref=e26]:
+        - img [ref=e27]
+        - paragraph [ref=e29]: Loading market data...
+  - contentinfo [ref=e45]:
+    - generic [ref=e46]:
+      - paragraph [ref=e47]: Data provided by Yahoo Finance. Not financial advice.
+      - paragraph [ref=e48]: © 2026 StockLens

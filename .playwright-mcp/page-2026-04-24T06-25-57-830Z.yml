@@ -1,0 +1,332 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - link "StockLens" [ref=e7] [cursor=pointer]:
+            - /url: /
+            - img [ref=e8]
+            - generic [ref=e11]: StockLens
+          - navigation [ref=e12]:
+            - link "Stocks" [ref=e13] [cursor=pointer]:
+              - /url: /
+            - link "Dashboard" [ref=e14] [cursor=pointer]:
+              - /url: /dashboard
+        - button "Switch to light mode" [ref=e16] [cursor=pointer]:
+          - img [ref=e17]
+    - main [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - heading "Market Dashboard" [level=1] [ref=e26]
+          - generic [ref=e27]:
+            - combobox [ref=e28] [cursor=pointer]:
+              - option "1 Month"
+              - option "3 Months"
+              - option "6 Months" [selected]
+              - option "1 Year"
+              - option "2 Years"
+              - option "5 Years"
+              - option "10 Years"
+              - option "Max"
+            - img
+        - generic [ref=e29]:
+          - generic [ref=e30]:
+            - paragraph [ref=e31]: "Click to show/hide charts:"
+            - generic [ref=e32]:
+              - button "All" [disabled] [ref=e33]:
+                - img [ref=e34]
+                - text: All
+              - button "None" [ref=e37] [cursor=pointer]:
+                - img [ref=e38]
+                - text: None
+          - generic [ref=e43]:
+            - button "VIX (Volatility Index)" [ref=e44] [cursor=pointer]:
+              - text: VIX (Volatility Index)
+              - img [ref=e46]
+            - button "S&P 500" [ref=e48] [cursor=pointer]:
+              - text: S&P 500
+              - img [ref=e50]
+            - button "Dow Jones Industrial Average" [ref=e52] [cursor=pointer]:
+              - text: Dow Jones Industrial Average
+              - img [ref=e54]
+            - button "NASDAQ Composite" [ref=e56] [cursor=pointer]:
+              - text: NASDAQ Composite
+              - img [ref=e58]
+            - button "10-Year Treasury Yield" [ref=e60] [cursor=pointer]:
+              - text: 10-Year Treasury Yield
+              - img [ref=e62]
+            - button "US Dollar Index (DXY)" [ref=e64] [cursor=pointer]:
+              - text: US Dollar Index (DXY)
+              - img [ref=e66]
+            - button "Gold Futures" [ref=e68] [cursor=pointer]:
+              - text: Gold Futures
+              - img [ref=e70]
+            - button "WTI Crude Oil" [ref=e72] [cursor=pointer]:
+              - text: WTI Crude Oil
+              - img [ref=e74]
+        - generic [ref=e76]:
+          - generic [ref=e77]:
+            - generic [ref=e78]:
+              - generic [ref=e79]:
+                - img [ref=e80]
+                - heading "Fear & Greed" [level=3] [ref=e82]
+                - generic [ref=e83]: VIX-based
+                - button [ref=e85]:
+                  - img [ref=e86]
+              - generic [ref=e88]:
+                - generic [ref=e89]:
+                  - paragraph [ref=e90]: Neutral
+                  - paragraph [ref=e91]: "VIX: 19.31"
+                - generic [ref=e95]:
+                  - generic [ref=e96]: Fear
+                  - generic [ref=e97]: Greed
+            - application [ref=e101]:
+              - generic [ref=e109]:
+                - generic [ref=e110]:
+                  - generic [ref=e112]: Oct 25
+                  - generic [ref=e114]: Nov 25
+                  - generic [ref=e116]: Dec 25
+                  - generic [ref=e118]: Jan 26
+                  - generic [ref=e120]: Feb 26
+                  - generic [ref=e122]: Mar 26
+                  - generic [ref=e124]: Mar 26
+                  - generic [ref=e126]: Apr 26
+                - generic [ref=e127]:
+                  - generic [ref=e129]: "12"
+                  - generic [ref=e131]: "18"
+                  - generic [ref=e133]: "24"
+                  - generic [ref=e135]: "36"
+            - generic [ref=e138]:
+              - img [ref=e139]
+              - generic [ref=e142]:
+                - paragraph [ref=e143]: The recent decline in volatility is likely due to easing of controls on marijuana by the White House and Anthropic's surge to a trillion-dollar valuation, which may have contributed to a sense of stability in the market.
+                - button "Read more" [ref=e144] [cursor=pointer]
+          - generic [ref=e145]:
+            - generic [ref=e147]:
+              - generic [ref=e148]:
+                - heading "S&P 500" [level=4] [ref=e149]
+                - generic [ref=e150]:
+                  - generic [ref=e151]: 7,108.4
+                  - generic [ref=e152]:
+                    - img [ref=e153]
+                    - text: "-0.41%"
+              - button [ref=e157]:
+                - img [ref=e158]
+            - application [ref=e163]:
+              - generic [ref=e171]:
+                - generic [ref=e172]:
+                  - generic [ref=e174]: Nov 25
+                  - generic [ref=e176]: Dec 25
+                  - generic [ref=e178]: Jan 26
+                  - generic [ref=e180]: Feb 26
+                  - generic [ref=e182]: Feb 26
+                  - generic [ref=e184]: Mar 26
+                  - generic [ref=e186]: Apr 26
+                - generic [ref=e187]:
+                  - generic [ref=e189]: 6.3K
+                  - generic [ref=e191]: 6.5K
+                  - generic [ref=e193]: 6.8K
+                  - generic [ref=e195]: 7.0K
+                  - generic [ref=e197]: 7.3K
+            - generic [ref=e200]:
+              - img [ref=e201]
+              - generic [ref=e204]:
+                - paragraph [ref=e205]: The recent surge in valuation of Anthropic to over a trillion dollars and the White House's push to ease marijuana controls have contributed to the current market momentum, with other factors such as oil price equilibrium and Tesla's Full Self-Driving upgrades also making headlines.
+                - button "Read more" [ref=e206] [cursor=pointer]
+          - generic [ref=e207]:
+            - generic [ref=e209]:
+              - generic [ref=e210]:
+                - heading "Dow Jones Industrial Average" [level=4] [ref=e211]
+                - generic [ref=e212]:
+                  - generic [ref=e213]: 49,310.32
+                  - generic [ref=e214]:
+                    - img [ref=e215]
+                    - text: "-0.36%"
+              - button [ref=e219]:
+                - img [ref=e220]
+            - application [ref=e225]:
+              - generic [ref=e233]:
+                - generic [ref=e234]:
+                  - generic [ref=e236]: Nov 25
+                  - generic [ref=e238]: Dec 25
+                  - generic [ref=e240]: Jan 26
+                  - generic [ref=e242]: Feb 26
+                  - generic [ref=e244]: Feb 26
+                  - generic [ref=e246]: Mar 26
+                  - generic [ref=e248]: Apr 26
+                - generic [ref=e249]:
+                  - generic [ref=e251]: 45.0K
+                  - generic [ref=e253]: 46.5K
+                  - generic [ref=e255]: 48.0K
+                  - generic [ref=e257]: 49.5K
+                  - generic [ref=e259]: 51.0K
+            - generic [ref=e262]:
+              - img [ref=e263]
+              - generic [ref=e266]:
+                - paragraph [ref=e267]: The recent surge in the Dow Jones Industrial Average may be linked to the trillion-dollar valuation of Anthropic and the White House's push to ease marijuana controls, which could have positive implications for the market.
+                - button "Read more" [ref=e268] [cursor=pointer]
+          - generic [ref=e269]:
+            - generic [ref=e271]:
+              - generic [ref=e272]:
+                - heading "NASDAQ Composite" [level=4] [ref=e273]
+                - generic [ref=e274]:
+                  - generic [ref=e275]: 24,438.5
+                  - generic [ref=e276]:
+                    - img [ref=e277]
+                    - text: "-0.89%"
+              - button [ref=e281]:
+                - img [ref=e282]
+            - application [ref=e287]:
+              - generic [ref=e295]:
+                - generic [ref=e296]:
+                  - generic [ref=e298]: Nov 25
+                  - generic [ref=e300]: Dec 25
+                  - generic [ref=e302]: Jan 26
+                  - generic [ref=e304]: Feb 26
+                  - generic [ref=e306]: Feb 26
+                  - generic [ref=e308]: Mar 26
+                  - generic [ref=e310]: Apr 26
+                - generic [ref=e311]:
+                  - generic [ref=e313]: 20.7K
+                  - generic [ref=e315]: 21.9K
+                  - generic [ref=e317]: 23.0K
+                  - generic [ref=e319]: 24.1K
+                  - generic [ref=e321]: 25.3K
+            - generic [ref=e324]:
+              - img [ref=e325]
+              - generic [ref=e328]:
+                - paragraph [ref=e329]: The recent surge is likely driven by Anthropic's trillion-dollar valuation and the White House's push to ease marijuana controls, which may boost related stocks.
+                - button "Read more" [ref=e330] [cursor=pointer]
+          - generic [ref=e331]:
+            - generic [ref=e333]:
+              - generic [ref=e334]:
+                - heading "10-Year Treasury Yield" [level=4] [ref=e335]
+                - generic [ref=e336]:
+                  - generic [ref=e337]: "4.32"
+                  - generic [ref=e338]:
+                    - img [ref=e339]
+                    - text: +0.70%
+              - button [ref=e343]:
+                - img [ref=e344]
+            - application [ref=e349]:
+              - generic [ref=e357]:
+                - generic [ref=e358]:
+                  - generic [ref=e360]: Nov 25
+                  - generic [ref=e362]: Dec 25
+                  - generic [ref=e364]: Jan 26
+                  - generic [ref=e366]: Feb 26
+                  - generic [ref=e368]: Feb 26
+                  - generic [ref=e370]: Mar 26
+                  - generic [ref=e372]: Apr 26
+                - generic [ref=e373]:
+                  - generic [ref=e375]: "3.9"
+                  - generic [ref=e377]: "4.05"
+                  - generic [ref=e379]: "4.2"
+                  - generic [ref=e381]: "4.35"
+                  - generic [ref=e383]: "4.5"
+            - generic [ref=e386]:
+              - img [ref=e387]
+              - generic [ref=e390]:
+                - paragraph [ref=e391]: The recent surge of Anthropic to a trillion-dollar valuation and the White House's push to ease marijuana controls may impact market sentiment, as investors weigh the potential implications of these developments on various industries.
+                - button "Read more" [ref=e392] [cursor=pointer]
+          - generic [ref=e393]:
+            - generic [ref=e395]:
+              - generic [ref=e396]:
+                - heading "US Dollar Index (DXY)" [level=4] [ref=e397]
+                - generic [ref=e398]:
+                  - generic [ref=e399]: "98.83"
+                  - generic [ref=e400]:
+                    - img [ref=e401]
+                    - text: +0.03%
+              - button [ref=e405]:
+                - img [ref=e406]
+            - application [ref=e411]:
+              - generic [ref=e419]:
+                - generic [ref=e420]:
+                  - generic [ref=e422]: Nov 25
+                  - generic [ref=e424]: Dec 25
+                  - generic [ref=e426]: Jan 26
+                  - generic [ref=e428]: Feb 26
+                  - generic [ref=e430]: Mar 26
+                  - generic [ref=e432]: Mar 26
+                  - generic [ref=e434]: Apr 26
+                - generic [ref=e435]:
+                  - generic [ref=e437]: "96"
+                  - generic [ref=e439]: "98"
+                  - generic [ref=e441]: "100"
+                  - generic [ref=e443]: "102"
+                  - generic [ref=e445]: "104"
+            - generic [ref=e448]:
+              - img [ref=e449]
+              - generic [ref=e452]:
+                - paragraph [ref=e453]: The recent surge of Anthropic to a trillion-dollar valuation and the White House's push to ease marijuana controls may impact market sentiment, as investors weigh the potential implications of these developments.
+                - button "Read more" [ref=e454] [cursor=pointer]
+          - generic [ref=e455]:
+            - generic [ref=e457]:
+              - generic [ref=e458]:
+                - heading "Gold Futures" [level=4] [ref=e459]
+                - generic [ref=e460]:
+                  - generic [ref=e461]: 4,697.5
+                  - generic [ref=e462]:
+                    - img [ref=e463]
+                    - text: "-0.16%"
+              - button [ref=e467]:
+                - img [ref=e468]
+            - application [ref=e473]:
+              - generic [ref=e481]:
+                - generic [ref=e482]:
+                  - generic [ref=e484]: Nov 25
+                  - generic [ref=e486]: Dec 25
+                  - generic [ref=e488]: Jan 26
+                  - generic [ref=e490]: Feb 26
+                  - generic [ref=e492]: Mar 26
+                  - generic [ref=e494]: Mar 26
+                  - generic [ref=e496]: Apr 26
+                - generic [ref=e497]:
+                  - generic [ref=e499]: 3.6K
+                  - generic [ref=e501]: 4.0K
+                  - generic [ref=e503]: 4.5K
+                  - generic [ref=e505]: 5.0K
+                  - generic [ref=e507]: 5.4K
+            - generic [ref=e510]:
+              - img [ref=e511]
+              - generic [ref=e514]:
+                - paragraph [ref=e515]: The recent surge in Anthropic's valuation to over $1 trillion and the White House's push to ease marijuana controls may be influencing investor sentiment, while StanChart's new oil price equilibrium of $95 per barrel could also be a factor.
+                - button "Read more" [ref=e516] [cursor=pointer]
+          - generic [ref=e517]:
+            - generic [ref=e519]:
+              - generic [ref=e520]:
+                - heading "WTI Crude Oil" [level=4] [ref=e521]
+                - generic [ref=e522]:
+                  - generic [ref=e523]: "95.58"
+                  - generic [ref=e524]:
+                    - img [ref=e525]
+                    - text: "-0.28%"
+              - button [ref=e529]:
+                - img [ref=e530]
+            - application [ref=e535]:
+              - generic [ref=e543]:
+                - generic [ref=e544]:
+                  - generic [ref=e546]: Nov 25
+                  - generic [ref=e548]: Dec 25
+                  - generic [ref=e550]: Jan 26
+                  - generic [ref=e552]: Feb 26
+                  - generic [ref=e554]: Mar 26
+                  - generic [ref=e556]: Mar 26
+                  - generic [ref=e558]: Apr 26
+                - generic [ref=e559]:
+                  - generic [ref=e561]: "40"
+                  - generic [ref=e563]: "60"
+                  - generic [ref=e565]: "80"
+                  - generic [ref=e567]: "100"
+                  - generic [ref=e569]: "120"
+            - generic [ref=e572]:
+              - img [ref=e573]
+              - generic [ref=e576]:
+                - paragraph [ref=e577]: The recent decline in oil prices may be influenced by StanChart's forecast of a new equilibrium at $95 per barrel, as well as Lufthansa's significant reduction in flights due to war-related fuel price and supply pressures.
+                - button "Read more" [ref=e578] [cursor=pointer]
+    - contentinfo [ref=e579]:
+      - generic [ref=e580]:
+        - paragraph [ref=e581]: Data provided by Yahoo Finance. Not financial advice.
+        - paragraph [ref=e582]: © 2026 StockLens
+  - generic [ref=e583]: "40"

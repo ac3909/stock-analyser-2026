@@ -1,0 +1,29 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - link "StockLens" [ref=e7] [cursor=pointer]:
+          - /url: /
+          - img [ref=e8]
+          - generic [ref=e11]: StockLens
+        - navigation [ref=e12]:
+          - link "Stocks" [ref=e13] [cursor=pointer]:
+            - /url: /
+          - link "Dashboard" [ref=e14] [cursor=pointer]:
+            - /url: /dashboard
+      - button "Switch to dark mode" [ref=e16] [cursor=pointer]:
+        - img [ref=e17]
+  - main [ref=e19]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - img [ref=e26]
+        - heading "StockLens" [level=1] [ref=e29]
+      - paragraph [ref=e32]: US Equity Analysis
+      - paragraph [ref=e34]: Financials, ratios, price history, and AI-powered analysis for US stocks.
+      - generic [ref=e36]:
+        - img
+        - textbox "Search stocks (e.g. AAPL, Tesla)" [ref=e37]
+  - contentinfo [ref=e38]:
+    - generic [ref=e39]:
+      - paragraph [ref=e40]: Data provided by Yahoo Finance. Not financial advice.
+      - paragraph [ref=e41]: © 2026 StockLens
