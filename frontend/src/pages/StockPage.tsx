@@ -129,10 +129,13 @@ export default function StockPage() {
   const [compTickers, setCompTickers] = useState<string[]>([]);
   const symbol = ticker?.toUpperCase() ?? "";
 
+  const staleTime = 5 * 60 * 1000; // 5 minutes — financial data doesn't change mid-session
+
   const profileQuery = useQuery({
     queryKey: ["profile", symbol],
     queryFn: () => getCompanyProfile(symbol),
     enabled: !!symbol,
+    staleTime,
     retry: (count, error) => !isNotFoundError(error) && count < 2,
   });
 
@@ -140,30 +143,35 @@ export default function StockPage() {
     queryKey: ["ratios", symbol],
     queryFn: () => getKeyRatios(symbol),
     enabled: !!symbol,
+    staleTime,
   });
 
   const incomeQuery = useQuery({
     queryKey: ["income", symbol],
     queryFn: () => getIncomeStatement(symbol),
     enabled: !!symbol,
+    staleTime,
   });
 
   const balanceQuery = useQuery({
     queryKey: ["balance", symbol],
     queryFn: () => getBalanceSheet(symbol),
     enabled: !!symbol,
+    staleTime,
   });
 
   const cashFlowQuery = useQuery({
     queryKey: ["cashflow", symbol],
     queryFn: () => getCashFlow(symbol),
     enabled: !!symbol,
+    staleTime,
   });
 
   const industryRatiosQuery = useQuery({
     queryKey: ["industryRatios", symbol],
     queryFn: () => getIndustryRatios(symbol),
     enabled: !!symbol,
+    staleTime,
   });
 
   // --- Error states ---
@@ -178,7 +186,7 @@ export default function StockPage() {
         </p>
         <button
           onClick={() => profileQuery.refetch()}
-          className="px-4 py-2 text-sm font-medium text-blue-600 bg-accent-subtle rounded-lg hover:opacity-80 transition-colors cursor-pointer"
+          className="px-4 py-2 text-sm font-medium text-accent bg-accent-subtle rounded-lg hover:opacity-80 transition-colors cursor-pointer"
         >
           Try again
         </button>
@@ -196,7 +204,7 @@ export default function StockPage() {
         </p>
         <Link
           to="/"
-          className="px-4 py-2 text-sm font-medium text-blue-600 bg-accent-subtle rounded-lg hover:opacity-80 transition-colors"
+          className="px-4 py-2 text-sm font-medium text-accent bg-accent-subtle rounded-lg hover:opacity-80 transition-colors"
         >
           Search for another stock
         </Link>
@@ -211,7 +219,7 @@ export default function StockPage() {
         <p className="text-sm text-text-muted mb-6">An unexpected error occurred while loading data.</p>
         <button
           onClick={() => profileQuery.refetch()}
-          className="px-4 py-2 text-sm font-medium text-blue-600 bg-accent-subtle rounded-lg hover:opacity-80 transition-colors cursor-pointer"
+          className="px-4 py-2 text-sm font-medium text-accent bg-accent-subtle rounded-lg hover:opacity-80 transition-colors cursor-pointer"
         >
           Try again
         </button>
@@ -273,13 +281,13 @@ export default function StockPage() {
             onClick={() => setActiveSection(section)}
             className={`px-4 py-2.5 text-sm font-medium transition-colors relative cursor-pointer whitespace-nowrap ${
               activeSection === section
-                ? "text-blue-600"
+                ? "text-accent"
                 : "text-text-secondary hover:text-text-primary"
             }`}
           >
             {section}
             {activeSection === section && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t" />
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-t" />
             )}
           </button>
         ))}
@@ -308,13 +316,13 @@ export default function StockPage() {
                   onClick={() => setActiveFinancialTab(tab)}
                   className={`px-3 sm:px-4 py-2.5 text-sm font-medium transition-colors relative cursor-pointer whitespace-nowrap ${
                     activeFinancialTab === tab
-                      ? "text-blue-600"
+                      ? "text-accent"
                       : "text-text-secondary hover:text-text-primary"
                   }`}
                 >
                   {tab}
                   {activeFinancialTab === tab && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t" />
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-t" />
                   )}
                 </button>
               ))}

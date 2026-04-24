@@ -35,7 +35,7 @@ export function KeyMetrics({ profile, ratios }: Props) {
       {stats.map((stat) => (
         <div key={stat.label} className="bg-surface-alt rounded-xl px-4 py-3">
           <p className="text-sm font-medium text-text-secondary">{stat.label}</p>
-          <p className="text-sm font-semibold text-text-primary">{stat.value}</p>
+          <p className="text-sm font-mono font-semibold text-text-primary">{stat.value}</p>
         </div>
       ))}
     </>
@@ -51,7 +51,7 @@ export default function CompanyProfile({ profile }: Props) {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <h2 className="text-2xl font-bold text-text-primary">{profile.name}</h2>
-            <span className="px-2.5 py-0.5 text-sm font-semibold text-blue-700 bg-accent-subtle rounded-lg">
+            <span className="px-2.5 py-0.5 text-sm font-mono font-semibold text-accent bg-accent-subtle rounded-lg border border-accent/20">
               {profile.symbol}
             </span>
           </div>
@@ -84,7 +84,7 @@ export default function CompanyProfile({ profile }: Props) {
             href={profile.website}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-blue-600 hover:text-blue-800 hover:underline shrink-0"
+            className="text-sm text-accent hover:opacity-80 hover:underline shrink-0"
           >
             {profile.website.replace(/^https?:\/\/(www\.)?/, "")}
           </a>

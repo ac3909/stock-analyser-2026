@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import type { FinancialStatement } from "../../types/stock";
+import { unitSuffixFromDivisor } from "../../utils/format";
 
 export type StatementType = "income_statement" | "balance_sheet" | "cash_flow";
 
@@ -123,13 +124,6 @@ const UNIT_OPTIONS = [
   { label: "Trillions", divisor: 1e12 },
 ] as const;
 
-const UNIT_SUFFIX: Record<number, string> = {
-  [1e3]: "K",
-  [1e6]: "M",
-  [1e9]: "B",
-  [1e12]: "T",
-};
-
 /**
  * Detect the best uniform unit for all values in the table.
  * Looks at the largest absolute value across all statements and picks a unit
@@ -231,7 +225,7 @@ export default function FinancialTable({ statements, statementType }: Props) {
 
   const autoUnit = useMemo(() => detectUniformUnit(statements), [statements]);
   const activeDivisor = unitDivisor === 0 ? autoUnit : unitDivisor;
-  const activeSuffix = UNIT_SUFFIX[activeDivisor] ?? "";
+  const activeSuffix = unitSuffixFromDivisor(activeDivisor);
 
   if (statements.length === 0) {
     return (
@@ -253,7 +247,7 @@ export default function FinancialTable({ statements, statementType }: Props) {
         <select
           value={unitDivisor}
           onChange={(e) => setUnitDivisor(Number(e.target.value))}
-          className="bg-surface-alt border border-border rounded-lg px-2 py-1 text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+          className="bg-surface-alt border border-border rounded-lg px-2 py-1 text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 cursor-pointer"
         >
           {UNIT_OPTIONS.map((opt) => (
             <option key={opt.label} value={opt.divisor}>{opt.label}</option>
@@ -311,7 +305,7 @@ export default function FinancialTable({ statements, statementType }: Props) {
                       <>
                         <td
                           key={`${stmt.date}-val`}
-                          className={`pl-5 pr-1 py-2.5 text-right whitespace-nowrap tabular-nums text-text-primary ${isSectionTotal ? "font-semibold" : ""}`}
+                          className={`pl-5 pr-1 py-2.5 text-right whitespace-nowrap tabular-nums font-mono text-text-primary ${isSectionTotal ? "font-semibold" : "font-medium"}`}
                         >
                           {formatValue(val, activeDivisor)}
                         </td>
@@ -321,7 +315,7 @@ export default function FinancialTable({ statements, statementType }: Props) {
                         >
                           {yoy != null ? (
                             <span
-                              className={`text-xs tabular-nums ${
+                              className={`text-xs tabular-nums font-mono ${
                                 yoy >= 0 ? "text-emerald-500" : "text-red-400"
                               }`}
                             >

@@ -13,7 +13,24 @@
       "Bash(npm run dev:*)",
       "Bash(curl:*)",
       "Bash(python -m json.tool:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(xargs wc *)",
+      "Bash(git checkout *)",
+      "Bash(pkill -f \"uvicorn app.main\")",
+      "Bash(python -m pytest tests/ -q)",
+      "PowerShell(Get-ChildItem \"F:\\\\Code_Projects\\\\stock-analysis-tool\\\\frontend\\\\src\" -Recurse -Name | Where-Object { $_ -match \"\\\\.\\(tsx|ts\\)$\" } | Sort-Object)",
+      "Skill(claude-md-management:revise-claude-md)",
+      "Bash(git *)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "Bash(python3 -c \"import json,sys; api=json.load\\(sys.stdin\\); paths=[p for p in api['paths'] if 'performance' in p or 'history' in p or 'score' in p]; print\\('New endpoints:', paths\\)\")",
+      "PowerShell(Get-NetTCPConnection *)",
+      "Skill(update-config)",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__query-docs",
+      "Skill(commit-commands:commit)"
     ]
   }
 }

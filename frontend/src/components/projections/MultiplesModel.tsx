@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import type { MultiplesInputs, MultiplesResults } from "../../types/stock";
 import { calculateMultiples } from "../../utils/multiples";
 import { fmtValFull } from "../../utils/format";
+import { UNIT_OPTIONS, detectUnit } from "../../utils/units";
 
 const MULTIPLE_OPTIONS = [
   { value: "pe" as const, label: "P/E (Price-to-Earnings)" },
@@ -14,20 +15,6 @@ const METRIC_LABELS: Record<MultiplesInputs["multiple_type"], string> = {
   ev_revenue: "Projected Revenue",
   ev_ebitda: "Projected EBITDA",
 };
-
-const UNIT_OPTIONS = [
-  { label: "Million", multiplier: 1e6 },
-  { label: "Billion", multiplier: 1e9 },
-  { label: "Trillion", multiplier: 1e12 },
-];
-
-/** Detect the best initial unit for a raw value. */
-function detectUnit(value: number): number {
-  const abs = Math.abs(value);
-  if (abs >= 1e12) return 1e12;
-  if (abs >= 1e9) return 1e9;
-  return 1e6;
-}
 
 interface Props {
   defaults: MultiplesInputs;

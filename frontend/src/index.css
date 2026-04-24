@@ -1,40 +1,60 @@
 @import "tailwindcss";
 
 @theme {
+  /* Typography */
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-display: "Barlow Condensed", ui-sans-serif, sans-serif;
+
+  /* Color tokens — mapped from CSS vars so components can use text-*, bg-*, border-* */
   --color-surface: var(--surface);
   --color-surface-alt: var(--surface-alt);
   --color-border: var(--border-color);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
   --color-accent-subtle: var(--accent-subtle);
   --color-positive-subtle: var(--positive-subtle);
   --color-negative-subtle: var(--negative-subtle);
   --color-warning-subtle: var(--warning-subtle);
 }
 
+/* ─── Light theme ──────────────────────────────────────────── */
 :root {
   --surface: #ffffff;
-  --surface-alt: #f9fafb;
-  --border-color: #e5e7eb;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --text-muted: #9ca3af;
-  --accent-subtle: #eff6ff;
-  --positive-subtle: #ecfdf5;
-  --negative-subtle: #fef2f2;
+  --surface-alt: #f3f7fb;
+  --border-color: #d5e1ee;
+  --text-primary: #0d1b2e;
+  --text-secondary: #567089;
+  --text-muted: #8ba0b5;
+  --accent: #d97706;
+  --accent-subtle: #fef9ee;
+  --positive-subtle: #f0fdf4;
+  --negative-subtle: #fff1f2;
   --warning-subtle: #fffbeb;
 }
 
+/* ─── Dark theme ───────────────────────────────────────────── */
 .dark {
-  --surface: #0f172a;
-  --surface-alt: #1e293b;
-  --border-color: #334155;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --accent-subtle: #1e3a5f;
-  --positive-subtle: #064e3b;
-  --negative-subtle: #450a0a;
-  --warning-subtle: #451a03;
+  --surface: #0d1b2e;
+  --surface-alt: #060f1c;
+  --border-color: #1a2f4a;
+  --text-primary: #e4efff;
+  --text-secondary: #7490a8;
+  --text-muted: #485f78;
+  --accent: #f59e0b;
+  --accent-subtle: #1c1400;
+  --positive-subtle: #05270f;
+  --negative-subtle: #250510;
+  --warning-subtle: #1c1100;
+}
+
+/* ─── Utilities ────────────────────────────────────────────── */
+
+/* Subtle grid pattern for hero/atmospheric backgrounds */
+.bg-grid-pattern {
+  background-image:
+    linear-gradient(var(--border-color) 1px, transparent 1px),
+    linear-gradient(to right, var(--border-color) 1px, transparent 1px);
+  background-size: 52px 52px;
 }

@@ -1,18 +1,46 @@
 import { TrendingUp } from "lucide-react";
 import TickerSearch from "../components/stock/TickerSearch";
 
-/** Landing page with a prominent centred search bar for finding stocks. */
 export default function HomePage() {
   return (
-    <div className="flex flex-col items-center justify-center py-16 sm:py-24 px-4">
-      <div className="flex items-center gap-2 sm:gap-3 mb-3">
-        <TrendingUp size={32} className="text-blue-600 sm:w-9 sm:h-9" />
-        <h2 className="text-3xl sm:text-4xl font-bold text-text-primary">StockLens</h2>
+    <div className="relative flex flex-col items-center justify-center py-20 sm:py-32 px-4 overflow-hidden">
+      {/* Atmospheric grid */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-30" />
+      {/* Radial fade — masks grid at edges */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 60% at 50% 50%, transparent 0%, var(--surface-alt) 75%)",
+        }}
+      />
+
+      <div className="relative z-10 flex flex-col items-center">
+        {/* Brand mark */}
+        <div className="flex items-center gap-3 mb-5">
+          <div className="p-2.5 rounded-xl bg-accent-subtle border border-border">
+            <TrendingUp size={28} className="text-accent" />
+          </div>
+          <h1 className="font-display text-5xl sm:text-6xl font-bold tracking-widest text-text-primary uppercase">
+            StockLens
+          </h1>
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-px w-12 bg-border" />
+          <p className="text-xs font-mono font-medium tracking-widest text-text-muted uppercase">
+            US Equity Analysis
+          </p>
+          <div className="h-px w-12 bg-border" />
+        </div>
+
+        <p className="text-text-secondary mb-10 text-sm sm:text-base text-center max-w-xs leading-relaxed">
+          Financials, ratios, price history, and AI-powered analysis for US stocks.
+        </p>
+
+        <TickerSearch large />
       </div>
-      <p className="text-text-secondary mb-8 sm:mb-10 text-base sm:text-lg text-center max-w-md">
-        Search for a US stock to view financials, ratios, and price history.
-      </p>
-      <TickerSearch large />
     </div>
   );
 }

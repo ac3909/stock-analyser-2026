@@ -7,31 +7,13 @@ import type {
   IndustryAverages,
 } from "../../types/stock";
 import { calculateDcf } from "../../utils/dcf";
-import { fmtVal, fmtValFull } from "../../utils/format";
-
-const UNIT_OPTIONS = [
-  { label: "Million", multiplier: 1e6 },
-  { label: "Billion", multiplier: 1e9 },
-  { label: "Trillion", multiplier: 1e12 },
-];
-
-/** Detect the best initial unit for a raw value. */
-function detectUnit(value: number): number {
-  const abs = Math.abs(value);
-  if (abs >= 1e12) return 1e12;
-  if (abs >= 1e9) return 1e9;
-  return 1e6;
-}
+import { fmtVal, fmtValFull, fmtPct } from "../../utils/format";
+import { UNIT_OPTIONS, detectUnit } from "../../utils/units";
 
 const sharesInputClass =
   "w-24 bg-transparent border-none px-3 py-1.5 text-sm text-right text-text-primary focus:outline-none";
 const sharesSelectClass =
   "bg-transparent border-none pr-3 pl-1 py-1.5 text-sm text-text-secondary focus:outline-none cursor-pointer";
-
-/** Format a percentage value for display. */
-function fmtPct(v: number | null): string {
-  return v != null ? `${v.toFixed(1)}%` : "—";
-}
 
 /** Keys into the per-year array fields of DcfInputs. */
 type ArrayKey =

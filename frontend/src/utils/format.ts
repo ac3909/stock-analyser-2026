@@ -41,3 +41,14 @@ export function fmtValFull(v: number): string {
   if (!suffix) return numStr;
   return `${numStr} ${UNIT_WORDS[suffix] ?? suffix}`;
 }
+
+/** Format a percentage value for display (e.g. "12.3%"), or "—" if null. */
+export function fmtPct(v: number | null): string {
+  return v != null ? `${v.toFixed(1)}%` : "—";
+}
+
+/** Map a known divisor (1e3, 1e6, etc.) to its short suffix letter. */
+export function unitSuffixFromDivisor(divisor: number): string {
+  const map: Record<number, string> = { [1e3]: "K", [1e6]: "M", [1e9]: "B", [1e12]: "T" };
+  return map[divisor] ?? "";
+}

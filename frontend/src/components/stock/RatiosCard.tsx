@@ -125,13 +125,13 @@ export default function RatiosCard({ ratios, industryRatios }: Props) {
                   }`}
                 >
                   <span className="text-sm font-medium text-text-primary truncate">{item.label}</span>
-                  <span className="w-14 text-right text-sm text-text-primary tabular-nums">
+                  <span className="w-14 text-right text-sm font-mono text-text-primary tabular-nums">
                     {available ? item.format(item.value!) : "—"}
                   </span>
                   <span className="w-16 text-center">
                     {delta != null ? (
                       <span
-                        className={`inline-flex items-center gap-0.5 text-xs font-medium tabular-nums ${
+                        className={`inline-flex items-center gap-0.5 text-xs font-mono font-medium tabular-nums ${
                           delta.isGood ? "text-emerald-600" : "text-red-600"
                         }`}
                       >
@@ -142,7 +142,7 @@ export default function RatiosCard({ ratios, industryRatios }: Props) {
                       <span className="text-xs text-text-muted">—</span>
                     )}
                   </span>
-                  <span className="w-14 text-right text-sm text-text-muted tabular-nums">
+                  <span className="w-14 text-right text-sm font-mono text-text-muted tabular-nums">
                     {item.industryValue != null ? item.format(item.industryValue) : "—"}
                   </span>
                 </div>

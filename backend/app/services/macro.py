@@ -23,7 +23,7 @@ INDICATORS = [
     {"symbol": "CL=F", "name": "WTI Crude Oil"},
 ]
 
-VALID_PERIODS = {"1mo", "3mo", "6mo", "1y", "2y", "5y"}
+VALID_PERIODS = {"1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "max"}
 
 # Simple in-memory cache: key -> (timestamp, data)
 _cache: dict[str, tuple[float, Any]] = {}
@@ -156,3 +156,35 @@ def fetch_all_indicators(period: str = "6mo") -> dict[str, Any]:
     }
     _set_cached(cache_key, result)
     return result
+
+
+def fetch_all_indicators_with_summaries(
+    period: str = "6mo",
+    articles: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
+    """Fetch all indicators and attach AI-generated news summaries.
+
+    Args:
+        period: Time period for price history.
+        articles: Recent news articles [{title, url}, ...] for context.
+
+    Returns:
+        Dict with indicators (including summary field) and fear_greed metadata.
+    """
+    from app.services.ai_summary import generate_indicator_summary
+
+    base = fetch_all_indicators(period)
+    safe_articles = articles or []
+
+    for indicator in base["indicators"]:
+        # Extract last ~2 weeks of prices for the summary
+        prices = indicator.get("prices", [])
+        prices_2w = prices[-14:] if len(prices) >= 14 else prices
+
+        indicator["summary"] = generate_indicator_summary(
+            indicator["name"],
+            prices_2w,
+            safe_articles,
+        )
+
+    return base

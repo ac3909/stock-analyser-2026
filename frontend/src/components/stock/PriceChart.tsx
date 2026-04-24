@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { Loader2 } from "lucide-react";
 import { getHistoricalPrices } from "../../services/stockApi";
+import { formatDate } from "../../utils/chart";
 
 const PERIODS = [
   { label: "1M", value: "1mo" },
@@ -20,18 +21,6 @@ const PERIODS = [
   { label: "5Y", value: "5y" },
   { label: "MAX", value: "max" },
 ] as const;
-
-/** Format a date string for the X-axis based on the selected period. */
-function formatDate(dateStr: string, period: string): string {
-  const d = new Date(dateStr);
-  if (["1mo", "3mo"].includes(period)) {
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  }
-  if (["6mo", "1y"].includes(period)) {
-    return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-  }
-  return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
-}
 
 /** Format a number as a USD price for the Y-axis. */
 function formatCurrency(value: number): string {
@@ -124,15 +113,15 @@ export default function PriceChart({ ticker }: Props) {
                   if (!active || !payload?.[0]) return null;
                   const point = payload[0].payload;
                   return (
-                    <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg">
-                      <p className="text-gray-400 mb-0.5">
+                    <div className="bg-surface border border-border text-text-primary text-xs rounded-xl px-3 py-2 shadow-xl">
+                      <p className="text-text-muted mb-1">
                         {new Date(point.date).toLocaleDateString("en-US", {
-                          month: "long",
+                          month: "short",
                           day: "numeric",
                           year: "numeric",
                         })}
                       </p>
-                      <p className="font-semibold">${point.close?.toFixed(2)}</p>
+                      <p className="font-mono font-semibold text-sm">${point.close?.toFixed(2)}</p>
                     </div>
                   );
                 }}

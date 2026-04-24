@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   AreaChart,
   Area,
@@ -8,25 +7,21 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Loader2, TrendingUp, TrendingDown } from "lucide-react";
-import { getMacroIndicator } from "../../services/macroApi";
+import { TrendingUp, TrendingDown, Sparkles, Info, ExternalLink } from "lucide-react";
+import type { MacroPricePoint, IndicatorSummary } from "../../types/macro";
+import { formatDate } from "../../utils/chart";
 
-const PERIODS = [
-  { label: "1M", value: "1mo" },
-  { label: "3M", value: "3mo" },
-  { label: "6M", value: "6mo" },
-  { label: "1Y", value: "1y" },
-  { label: "2Y", value: "2y" },
-] as const;
-
-/** Format a date string for the X-axis. */
-function formatDate(dateStr: string, period: string): string {
-  const d = new Date(dateStr);
-  if (["1mo", "3mo"].includes(period)) {
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  }
-  return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-}
+/** Short descriptions of what each indicator measures. */
+export const INDICATOR_DESCRIPTIONS: Record<string, string> = {
+  "^VIX": "Measures expected 30-day volatility of the S&P 500. Higher values indicate more fear and uncertainty in the market.",
+  "^GSPC": "Tracks 500 of the largest US companies. Widely regarded as the best gauge of overall US stock market performance.",
+  "^DJI": "Tracks 30 large, publicly-owned blue-chip companies trading on the NYSE and NASDAQ.",
+  "^IXIC": "Tracks over 3,000 stocks listed on the NASDAQ exchange, heavily weighted toward technology companies.",
+  "^TNX": "The yield on US 10-year government bonds. A key benchmark for mortgage rates and economic outlook.",
+  "DX-Y.NYB": "Measures the value of the US dollar against a basket of major foreign currencies (EUR, JPY, GBP, CAD, SEK, CHF).",
+  "GC=F": "The price of gold futures contracts. Gold is often seen as a safe-haven asset during economic uncertainty.",
+  "CL=F": "The price of West Texas Intermediate crude oil futures. A key indicator of energy costs and global economic activity.",
+};
 
 /** Format a number compactly for the Y-axis. */
 function formatAxisValue(value: number): string {
@@ -35,36 +30,91 @@ function formatAxisValue(value: number): string {
   return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
+/** Info button with hover tooltip for indicator descriptions. */
+export function InfoTooltip({ text }: { text: string }) {
+  return (
+    <div className="group/info relative">
+      <button className="p-1 rounded-full text-text-muted hover:text-text-secondary hover:bg-surface-alt transition-colors cursor-default">
+        <Info size={14} />
+      </button>
+      <div className="invisible opacity-0 group-hover/info:visible group-hover/info:opacity-100 transition-opacity duration-150 absolute z-[100] top-full right-0 mt-1 w-64 px-3 py-2 rounded-xl border border-border bg-surface shadow-lg text-xs text-text-secondary leading-relaxed pointer-events-none">
+        {text}
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   symbol: string;
   name: string;
-  initialValue?: number | null;
-  initialChangePct?: number | null;
+  currentValue: number | null;
+  changePct: number | null;
+  prices: MacroPricePoint[];
+  summary?: IndicatorSummary;
+  period: string;
 }
 
-/** Area chart card for a single macro indicator with period selector. */
-export default function MacroChart({ symbol, name, initialValue, initialChangePct }: Props) {
-  const [period, setPeriod] = useState("6mo");
+/** Expandable AI summary footer shared across chart cards. */
+export function SummaryFooter({ summary }: { summary: IndicatorSummary }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasSources = summary.sources.length > 0;
 
-  const { data, isFetching } = useQuery({
-    queryKey: ["macroIndicator", symbol, period],
-    queryFn: () => getMacroIndicator(symbol, period),
-    staleTime: 5 * 60 * 1000,
-  });
+  return (
+    <div className="px-4 py-2.5 border-t border-border bg-surface-alt">
+      <div className="flex gap-2">
+        <Sparkles size={14} className="text-accent shrink-0 mt-0.5" />
+        <div className="min-w-0 flex-1">
+          <p className={`text-xs text-text-secondary leading-relaxed ${!expanded ? "line-clamp-1" : ""}`}>
+            {summary.text}
+          </p>
+          {expanded && hasSources && (
+            <div className="mt-2 space-y-1">
+              {summary.sources.map((src, i) => (
+                <a
+                  key={i}
+                  href={src.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs text-blue-500 hover:text-blue-400 truncate"
+                >
+                  <ExternalLink size={10} className="shrink-0" />
+                  <span className="truncate">{src.title}</span>
+                </a>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="text-xs text-blue-500 hover:text-blue-400 mt-1 cursor-pointer"
+          >
+            {expanded ? "Show less" : "Read more"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  const prices = data?.prices ?? [];
-  const currentValue = data?.current_value ?? initialValue ?? null;
-  const changePct = data?.change_pct ?? initialChangePct ?? null;
-
+/** Area chart card for a single macro indicator with AI summary. */
+export default function MacroChart({
+  symbol,
+  name,
+  currentValue,
+  changePct,
+  prices,
+  summary,
+  period,
+}: Props) {
   const firstClose = prices[0]?.close ?? 0;
   const lastClose = prices[prices.length - 1]?.close ?? 0;
   const isUp = lastClose >= firstClose;
   const color = isUp ? "#10b981" : "#ef4444";
   const gradientId = `macroGrad-${symbol.replace(/[^a-zA-Z0-9]/g, "")}`;
   const tickColor = "var(--text-muted)";
+  const description = INDICATOR_DESCRIPTIONS[symbol];
 
   return (
-    <div className="bg-surface rounded-2xl border border-border overflow-hidden">
+    <div className="bg-surface rounded-2xl border border-border overflow-hidden flex flex-col">
       {/* Header */}
       <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center justify-between gap-2">
@@ -72,7 +122,7 @@ export default function MacroChart({ symbol, name, initialValue, initialChangePc
             <h4 className="text-sm font-semibold text-text-primary truncate">{name}</h4>
             <div className="flex items-center gap-2 mt-0.5">
               {currentValue != null && (
-                <span className="text-sm font-semibold text-text-primary tabular-nums">
+                <span className="text-sm font-mono font-semibold text-text-primary tabular-nums">
                   {currentValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                 </span>
               )}
@@ -90,31 +140,13 @@ export default function MacroChart({ symbol, name, initialValue, initialChangePc
               )}
             </div>
           </div>
-          <div className="flex gap-0.5 bg-surface-alt rounded-lg p-0.5 shrink-0">
-            {PERIODS.map((p) => (
-              <button
-                key={p.value}
-                onClick={() => setPeriod(p.value)}
-                className={`px-2 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                  period === p.value
-                    ? "bg-surface text-text-primary shadow-sm"
-                    : "text-text-secondary hover:text-text-primary"
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+          {description && <InfoTooltip text={description} />}
         </div>
       </div>
 
       {/* Chart */}
       <div className="h-40 px-2 py-2">
-        {isFetching && prices.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-text-muted">
-            <Loader2 size={20} className="animate-spin" />
-          </div>
-        ) : prices.length === 0 ? (
+        {prices.length === 0 ? (
           <div className="h-full flex items-center justify-center text-xs text-text-muted">
             No data available
           </div>
@@ -148,15 +180,15 @@ export default function MacroChart({ symbol, name, initialValue, initialChangePc
                   if (!active || !payload?.[0]) return null;
                   const point = payload[0].payload;
                   return (
-                    <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg">
-                      <p className="text-gray-400 mb-0.5">
+                    <div className="bg-surface border border-border text-text-primary text-xs rounded-xl px-3 py-2 shadow-xl">
+                      <p className="text-text-muted mb-1">
                         {new Date(point.date).toLocaleDateString("en-US", {
-                          month: "long",
+                          month: "short",
                           day: "numeric",
                           year: "numeric",
                         })}
                       </p>
-                      <p className="font-semibold">{point.close?.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+                      <p className="font-mono font-semibold">{point.close?.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
                     </div>
                   );
                 }}
@@ -172,6 +204,13 @@ export default function MacroChart({ symbol, name, initialValue, initialChangePc
               />
             </AreaChart>
           </ResponsiveContainer>
+        )}
+      </div>
+
+      {/* AI Summary */}
+      <div className="mt-auto">
+        {summary?.text && (
+          <SummaryFooter summary={summary} />
         )}
       </div>
     </div>
