@@ -15,7 +15,7 @@ from app.models.stock import (
     KeyRatios,
     SearchResponse,
 )
-from app.services.yahoo_finance import YahooFinanceProvider, _get_crumb, _get_info, _session
+from app.services.yahoo_finance import YahooFinanceProvider, _get_crumb, _get_info, _session, _crumb_debug
 
 router = APIRouter(prefix="/api/stocks", tags=["stocks"])
 
@@ -39,7 +39,7 @@ def debug_ticker(ticker: str) -> dict:
         raw_resp = r.json()
     except Exception as e:
         raw_resp = str(e)
-    return {"crumb": crumb, "info_keys": list(info.keys()), "raw_status": raw_status, "raw_response": raw_resp}
+    return {"crumb": crumb, "crumb_debug": _crumb_debug, "info_keys": list(info.keys()), "raw_status": raw_status, "raw_response": raw_resp}
 
 
 @router.get("/search", response_model=SearchResponse)

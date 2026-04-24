@@ -50,22 +50,47 @@ _crumb: str | None = None
 _crumb_fetched_at: float = 0
 
 
+_crumb_debug: dict[str, Any] = {}
+
+
 def _get_crumb() -> str | None:
     """Fetch Yahoo Finance API crumb required for quoteSummary requests."""
-    global _crumb, _crumb_fetched_at
+    global _crumb, _crumb_fetched_at, _crumb_debug
     if _crumb and time.time() - _crumb_fetched_at < 3600:
         return _crumb
+
+    # Strategy 1: standard flow via finance.yahoo.com consent cookies
     try:
-        _session.get("https://finance.yahoo.com", timeout=10)
-        resp = _session.get(
-            "https://query1.finance.yahoo.com/v1/test/getcrumb", timeout=10
-        )
-        if resp.status_code == 200 and resp.text.strip():
-            _crumb = resp.text.strip()
+        r0 = _session.get("https://finance.yahoo.com", timeout=10)
+        _crumb_debug["consent_status"] = r0.status_code
+        _crumb_debug["consent_url"] = str(r0.url)
+        for crumb_url in [
+            "https://query1.finance.yahoo.com/v1/test/getcrumb",
+            "https://query2.finance.yahoo.com/v1/test/getcrumb",
+        ]:
+            r = _session.get(crumb_url, timeout=10)
+            _crumb_debug[crumb_url] = r.status_code
+            if r.status_code == 200 and r.text.strip():
+                _crumb = r.text.strip()
+                _crumb_fetched_at = time.time()
+                return _crumb
+    except Exception as e:
+        _crumb_debug["error"] = str(e)
+        logger.debug("Failed to fetch Yahoo Finance crumb: %s", e)
+
+    # Strategy 2: let yfinance initialize its own session
+    try:
+        t = yf.Ticker("AAPL")
+        _ = t.fast_info  # triggers yfinance's internal cookie setup
+        r = _session.get("https://query1.finance.yahoo.com/v1/test/getcrumb", timeout=10)
+        _crumb_debug["yf_fallback_status"] = r.status_code
+        if r.status_code == 200 and r.text.strip():
+            _crumb = r.text.strip()
             _crumb_fetched_at = time.time()
             return _crumb
-    except Exception:
-        logger.debug("Failed to fetch Yahoo Finance crumb")
+    except Exception as e:
+        _crumb_debug["yf_fallback_error"] = str(e)
+
     return None
 
 
