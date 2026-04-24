@@ -63,7 +63,7 @@ class YahooFinanceProvider(DataProvider):
     """Fetches stock market data from Yahoo Finance via yfinance."""
 
     def search_tickers(self, query: str) -> SearchResponse:
-        """Search for tickers matching a query using yfinance's search.
+        """Search for tickers matching a query via Yahoo Finance search API.
 
         Args:
             query: The search term (company name or partial ticker).
@@ -72,17 +72,23 @@ class YahooFinanceProvider(DataProvider):
             A SearchResponse with matching results. Returns empty results on error.
         """
         try:
-            search = yf.Search(query, session=_session)
-            results: list[SearchResult] = []
-            for quote in search.quotes:
-                results.append(
-                    SearchResult(
-                        symbol=quote.get("symbol", ""),
-                        name=quote.get("shortname", quote.get("longname", "")),
-                        exchange=quote.get("exchange"),
-                        type=quote.get("quoteType"),
-                    )
+            resp = _session.get(
+                "https://query1.finance.yahoo.com/v1/finance/search",
+                params={"q": query, "quotesCount": 10, "newsCount": 0},
+                timeout=10,
+            )
+            resp.raise_for_status()
+            quotes = resp.json().get("quotes", [])
+            results: list[SearchResult] = [
+                SearchResult(
+                    symbol=q.get("symbol", ""),
+                    name=q.get("shortname", q.get("longname", "")),
+                    exchange=q.get("exchange"),
+                    type=q.get("quoteType"),
                 )
+                for q in quotes
+                if q.get("symbol")
+            ]
             return SearchResponse(results=results)
         except Exception:
             logger.exception("Error searching tickers for query '%s'", query)
