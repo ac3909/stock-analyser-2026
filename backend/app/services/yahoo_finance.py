@@ -9,6 +9,7 @@ import logging
 from typing import Any
 
 import pandas as pd
+import requests
 import yfinance as yf
 from cachetools import TTLCache
 
@@ -33,6 +34,16 @@ VALID_PERIODS = {"1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"}
 # Module-level TTL cache for stock.info dicts (5-minute TTL, up to 100 tickers)
 _info_cache: TTLCache[str, dict[str, Any]] = TTLCache(maxsize=100, ttl=300)
 
+# Shared session with browser User-Agent to avoid Yahoo Finance cloud IP blocks
+_session = requests.Session()
+_session.headers.update({
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    )
+})
+
 
 def _get_info(ticker: str) -> dict[str, Any]:
     """Fetch stock.info with caching to avoid redundant Yahoo Finance calls.
@@ -43,7 +54,7 @@ def _get_info(ticker: str) -> dict[str, Any]:
     key = ticker.upper()
     if key in _info_cache:
         return _info_cache[key]
-    info = yf.Ticker(ticker).info or {}
+    info = yf.Ticker(ticker, session=_session).info or {}
     _info_cache[key] = info
     return info
 
@@ -61,7 +72,7 @@ class YahooFinanceProvider(DataProvider):
             A SearchResponse with matching results. Returns empty results on error.
         """
         try:
-            search = yf.Search(query)
+            search = yf.Search(query, session=_session)
             results: list[SearchResult] = []
             for quote in search.quotes:
                 results.append(
@@ -126,7 +137,7 @@ class YahooFinanceProvider(DataProvider):
         if period not in VALID_PERIODS:
             period = "1y"
         try:
-            stock = yf.Ticker(ticker)
+            stock = yf.Ticker(ticker, session=_session)
             df = stock.history(period=period)
             if df.empty:
                 return None
@@ -180,7 +191,7 @@ class YahooFinanceProvider(DataProvider):
             A FinancialStatementResponse with annual income statements, or None on error.
         """
         try:
-            stock = yf.Ticker(ticker)
+            stock = yf.Ticker(ticker, session=_session)
             df = stock.income_stmt
             statements = self._parse_financial_df(df)
             return FinancialStatementResponse(
@@ -202,7 +213,7 @@ class YahooFinanceProvider(DataProvider):
             A FinancialStatementResponse with annual balance sheets, or None on error.
         """
         try:
-            stock = yf.Ticker(ticker)
+            stock = yf.Ticker(ticker, session=_session)
             df = stock.balance_sheet
             statements = self._parse_financial_df(df)
             return FinancialStatementResponse(
@@ -224,7 +235,7 @@ class YahooFinanceProvider(DataProvider):
             A FinancialStatementResponse with annual cash flow statements, or None on error.
         """
         try:
-            stock = yf.Ticker(ticker)
+            stock = yf.Ticker(ticker, session=_session)
             df = stock.cashflow
             statements = self._parse_financial_df(df)
             return FinancialStatementResponse(
@@ -310,7 +321,7 @@ class YahooFinanceProvider(DataProvider):
 
             for sym in peer_symbols:
                 try:
-                    peer = yf.Ticker(sym)
+                    peer = yf.Ticker(sym, session=_session)
 
                     # Income statement for margins, tax rate, and revenue growth
                     inc = peer.income_stmt
@@ -381,7 +392,7 @@ class YahooFinanceProvider(DataProvider):
             if not industry_key:
                 return None
 
-            ind = yf.Industry(industry_key)
+            ind = yf.Industry(industry_key, session=_session)
             top_df = ind.top_companies
             if top_df is None or top_df.empty:
                 return None
