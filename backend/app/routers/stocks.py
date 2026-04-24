@@ -15,11 +15,31 @@ from app.models.stock import (
     KeyRatios,
     SearchResponse,
 )
-from app.services.yahoo_finance import YahooFinanceProvider
+from app.services.yahoo_finance import YahooFinanceProvider, _get_crumb, _get_info, _session
 
 router = APIRouter(prefix="/api/stocks", tags=["stocks"])
 
 provider = YahooFinanceProvider()
+
+
+@router.get("/debug/{ticker}")
+def debug_ticker(ticker: str) -> dict:
+    """Diagnostic endpoint — returns raw API responses to diagnose cloud issues."""
+    crumb = _get_crumb()
+    info = _get_info(ticker)
+    raw_resp = None
+    raw_status = None
+    try:
+        params = {"modules": "price,summaryProfile", "crumb": crumb} if crumb else {"modules": "price,summaryProfile"}
+        r = _session.get(
+            f"https://query2.finance.yahoo.com/v10/finance/quoteSummary/{ticker.upper()}",
+            params=params, timeout=15,
+        )
+        raw_status = r.status_code
+        raw_resp = r.json()
+    except Exception as e:
+        raw_resp = str(e)
+    return {"crumb": crumb, "info_keys": list(info.keys()), "raw_status": raw_status, "raw_response": raw_resp}
 
 
 @router.get("/search", response_model=SearchResponse)
